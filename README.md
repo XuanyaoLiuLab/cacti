@@ -23,7 +23,7 @@ in the associated manuscript (bioRxiv).
 
 ``` r
 install.packages("devtools")   # if not installed yet
-devtools::install_github("liliw-w/cacti")
+devtools::install_github("liliw-w/cacti", build_vignettes = TRUE)
 ```
 
 After installation:
