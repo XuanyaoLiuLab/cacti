@@ -1,5 +1,4 @@
-CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin
-QTL Detection ================
+# CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin QTL Detection
 
 ## Overview
 
@@ -39,7 +38,10 @@ library(cacti)
 
 ## Usage
 
-After installing the package, see:
+After installing the package, see [full documentation and
+vignettes](https://liliw-w.github.io/cacti/).
+
+Also see in the package -
 
 - The vignette **“CACTI peak-window pipeline”** that gives a more
   detailed walk through of inputs, outputs, and example usage.

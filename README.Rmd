@@ -1,5 +1,5 @@
 ---
-title: "CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin QTL Detection"
+title: ""
 output: github_document
 ---
 
@@ -9,6 +9,8 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+
+# CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin QTL Detection
 
 ## Overview
 

@@ -363,29 +363,29 @@ res_single_chr <- cacti_run_chr(
 #> Window size:50kb
 #> 
 #> Input files:
-#> Peaks BED:/tmp/RtmpIvhooj/temp_libpathfd7a43f04ed54/cacti/extdata/test_pheno_meta.bed
-#> Phenotype:/tmp/RtmpIvhooj/temp_libpathfd7a43f04ed54/cacti/extdata/test_pheno.txt
-#> Covariate:/tmp/RtmpIvhooj/temp_libpathfd7a43f04ed54/cacti/extdata/test_covariates.txt
-#> QTL summary stats:/tmp/RtmpIvhooj/temp_libpathfd7a43f04ed54/cacti/extdata/test_qtl_sum_stats_chr5.txt.gz
+#> Peaks BED:/tmp/RtmpIvhooj/temp_libpathfd7a47db60284/cacti/extdata/test_pheno_meta.bed
+#> Phenotype:/tmp/RtmpIvhooj/temp_libpathfd7a47db60284/cacti/extdata/test_pheno.txt
+#> Covariate:/tmp/RtmpIvhooj/temp_libpathfd7a47db60284/cacti/extdata/test_covariates.txt
+#> QTL summary stats:/tmp/RtmpIvhooj/temp_libpathfd7a47db60284/cacti/extdata/test_qtl_sum_stats_chr5.txt.gz
 #> 
 #> Output files:
-#> Grouped peak: /tmp/Rtmpldbpiw/cacti_chr5_fe8494aa45928_peak_group_window50kb.txt
-#> Grouped peak (peak as row):/tmp/Rtmpldbpiw/cacti_chr5_fe8494aa45928_peak_group_window50kb_peak_as_row.txt
-#> Residual phenotype:/tmp/Rtmpldbpiw/cacti_chr5_fe8494aa45928_pheno_cov_residual.txt
-#> Pval results (chr5): /tmp/Rtmpldbpiw/cacti_chr5_fe8494aa45928_pval_window50kb_chr5.txt.gz
+#> Grouped peak: /tmp/Rtmp5OjzYr/cacti_chr5_1007f31a478ebc_peak_group_window50kb.txt
+#> Grouped peak (peak as row):/tmp/Rtmp5OjzYr/cacti_chr5_1007f31a478ebc_peak_group_window50kb_peak_as_row.txt
+#> Residual phenotype:/tmp/Rtmp5OjzYr/cacti_chr5_1007f31a478ebc_pheno_cov_residual.txt
+#> Pval results (chr5): /tmp/Rtmp5OjzYr/cacti_chr5_1007f31a478ebc_pval_window50kb_chr5.txt.gz
 
 res_single_chr
 #> $file_peak_group
-#> [1] "/tmp/Rtmpldbpiw/cacti_chr5_fe8494aa45928_peak_group_window50kb.txt"
+#> [1] "/tmp/Rtmp5OjzYr/cacti_chr5_1007f31a478ebc_peak_group_window50kb.txt"
 #> 
 #> $file_peak_group_peaklevel
-#> [1] "/tmp/Rtmpldbpiw/cacti_chr5_fe8494aa45928_peak_group_window50kb_peak_as_row.txt"
+#> [1] "/tmp/Rtmp5OjzYr/cacti_chr5_1007f31a478ebc_peak_group_window50kb_peak_as_row.txt"
 #> 
 #> $file_pheno_cov_residual
-#> [1] "/tmp/Rtmpldbpiw/cacti_chr5_fe8494aa45928_pheno_cov_residual.txt"
+#> [1] "/tmp/Rtmp5OjzYr/cacti_chr5_1007f31a478ebc_pheno_cov_residual.txt"
 #> 
 #> $file_p_peak_group
-#> [1] "/tmp/Rtmpldbpiw/cacti_chr5_fe8494aa45928_pval_window50kb_chr5.txt.gz"
+#> [1] "/tmp/Rtmp5OjzYr/cacti_chr5_1007f31a478ebc_pval_window50kb_chr5.txt.gz"
 ```
 
 ------------------------------------------------------------------------
@@ -460,39 +460,39 @@ res_genome <- cacti_run_genome(
 #>  CACTI peak-window pipeline for chr5 completed successfully!
 #> 
 #> Input files:
-#> Peaks BED:/tmp/RtmpIvhooj/temp_libpathfd7a43f04ed54/cacti/extdata/test_pheno_meta.bed
-#> Phenotype:/tmp/RtmpIvhooj/temp_libpathfd7a43f04ed54/cacti/extdata/test_pheno.txt
-#> Covariate:/tmp/RtmpIvhooj/temp_libpathfd7a43f04ed54/cacti/extdata/test_covariates.txt
-#> QTL summary stats:/tmp/RtmpIvhooj/temp_libpathfd7a43f04ed54/cacti/extdata/test_qtl_sum_stats_chr5.txt.gz
+#> Peaks BED:/tmp/RtmpIvhooj/temp_libpathfd7a47db60284/cacti/extdata/test_pheno_meta.bed
+#> Phenotype:/tmp/RtmpIvhooj/temp_libpathfd7a47db60284/cacti/extdata/test_pheno.txt
+#> Covariate:/tmp/RtmpIvhooj/temp_libpathfd7a47db60284/cacti/extdata/test_covariates.txt
+#> QTL summary stats:/tmp/RtmpIvhooj/temp_libpathfd7a47db60284/cacti/extdata/test_qtl_sum_stats_chr5.txt.gz
 #> 
 #> Output files:
-#> Grouped peak: /tmp/Rtmpldbpiw/cacti_genome_fe8497e195629_peak_group_window50kb.txt
-#> Grouped peak (peak as row):/tmp/Rtmpldbpiw/cacti_genome_fe8497e195629_peak_group_window50kb_peak_as_row.txt
-#> Residual phenotype:/tmp/Rtmpldbpiw/cacti_genome_fe8497e195629_pheno_cov_residual.txt
-#> Pval results (chr5): /tmp/Rtmpldbpiw/cacti_genome_fe8497e195629_pval_window50kb_chr5.txt.gz
+#> Grouped peak: /tmp/Rtmp5OjzYr/cacti_genome_1007f33ece6da8_peak_group_window50kb.txt
+#> Grouped peak (peak as row):/tmp/Rtmp5OjzYr/cacti_genome_1007f33ece6da8_peak_group_window50kb_peak_as_row.txt
+#> Residual phenotype:/tmp/Rtmp5OjzYr/cacti_genome_1007f33ece6da8_pheno_cov_residual.txt
+#> Pval results (chr5): /tmp/Rtmp5OjzYr/cacti_genome_1007f33ece6da8_pval_window50kb_chr5.txt.gz
 #> 
 #> === [II/III] Adding FDR across windows and chromosomes ===
 #> 
 #> === [III/III] Genome-wide CACTI peak-window pipeline completed with FDR! ===
 #> Run summary:
-#> Pvalue output: /tmp/Rtmpldbpiw/cacti_genome_fe8497e195629_pval_window50kb_chr5.txt.gz
-#> FDR output: /tmp/Rtmpldbpiw/cacti_fdr_chr5.txt.gz
+#> Pvalue output: /tmp/Rtmp5OjzYr/cacti_genome_1007f33ece6da8_pval_window50kb_chr5.txt.gz
+#> FDR output: /tmp/Rtmp5OjzYr/cacti_fdr_chr5.txt.gz
 
 res_genome
 #> $file_peak_group
-#> [1] "/tmp/Rtmpldbpiw/cacti_genome_fe8497e195629_peak_group_window50kb.txt"
+#> [1] "/tmp/Rtmp5OjzYr/cacti_genome_1007f33ece6da8_peak_group_window50kb.txt"
 #> 
 #> $file_peak_group_peaklevel
-#> [1] "/tmp/Rtmpldbpiw/cacti_genome_fe8497e195629_peak_group_window50kb_peak_as_row.txt"
+#> [1] "/tmp/Rtmp5OjzYr/cacti_genome_1007f33ece6da8_peak_group_window50kb_peak_as_row.txt"
 #> 
 #> $file_pheno_cov_residual
-#> [1] "/tmp/Rtmpldbpiw/cacti_genome_fe8497e195629_pheno_cov_residual.txt"
+#> [1] "/tmp/Rtmp5OjzYr/cacti_genome_1007f33ece6da8_pheno_cov_residual.txt"
 #> 
 #> $file_p_peak_group
-#> [1] "/tmp/Rtmpldbpiw/cacti_genome_fe8497e195629_pval_window50kb_chr5.txt.gz"
+#> [1] "/tmp/Rtmp5OjzYr/cacti_genome_1007f33ece6da8_pval_window50kb_chr5.txt.gz"
 #> 
 #> $file_fdr_out
-#> [1] "/tmp/Rtmpldbpiw/cacti_fdr_chr5.txt.gz"
+#> [1] "/tmp/Rtmp5OjzYr/cacti_fdr_chr5.txt.gz"
 ```
 
 ------------------------------------------------------------------------

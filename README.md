@@ -1,6 +1,5 @@
-CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin
-QTL Detection
-================
+
+# CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin QTL Detection
 
 ## Overview
 
