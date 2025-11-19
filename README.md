@@ -1,5 +1,8 @@
-CACTI
+CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin
+QTL Detection
 ================
+
+## Overview
 
 <img src="inst/figures/cacti_overview.png"/>
 
@@ -15,9 +18,6 @@ The package provides a pipeline to:
 - run **multi-peak** association tests using a principal-component
   omnibus (PCO) test, and
 - aggregate results across chromosomes and compute **window-level FDR**.
-
-The implementation corresponds to the peak-window CACTI method described
-in the associated manuscript (bioRxiv).
 
 ------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ library(cacti)
 
 ------------------------------------------------------------------------
 
-## Documentation
+## Usage
 
 After installing the package, see:
 
@@ -203,5 +203,5 @@ res_genome
 
 If you use the CACTI method, please cite:
 
-Wang, L., & Liu, X. (2025). Improved chromatin QTL mapping with CACTI.
-bioRxiv, 2025-06.
+> Wang, L., & Liu, X. (2025). Improved chromatin QTL mapping with CACTI.
+> bioRxiv, 2025-06.
