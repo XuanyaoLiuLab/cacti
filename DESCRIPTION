@@ -20,8 +20,16 @@ Imports:
     readr,
     stringr,
     tibble,
-    tidyr
+    tidyr,
+    Rsubread
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    VariantAnnotation,
+    snpStats,
+    SummarizedExperiment,
+    GenomeInfoDb,
+    BiocGenerics,
+    edgeR,
+    MatrixEQTL
 VignetteBuilder: knitr

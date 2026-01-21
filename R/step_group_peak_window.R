@@ -30,9 +30,10 @@ cacti_group_peak_window <- function(window_size, file_pheno_meta, file_peak_grou
   } else if (!is.numeric(window_size)) {
     stop("Specify window size in kb like '50kb' or provide a numeric bp value.")
   }
-  
+
   # read pheno meta
   pheno_meta <- data.table::fread(file_pheno_meta, header = TRUE)
+  colnames(pheno_meta) <- c('phe_id', 'phe_chr', 'phe_from', 'phe_to')
 
   # add chr prefix if missing
   if (!all(startsWith(pheno_meta$phe_chr, "chr")))

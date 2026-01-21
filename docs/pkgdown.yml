@@ -3,7 +3,8 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   cacti_peak_window: cacti_peak_window.html
-last_built: 2025-11-19T21:56Z
+  cacti_s_prep: cacti_s_prep.html
+last_built: 2026-01-21T00:09Z
 urls:
   reference: https://liliw-w.github.io/cacti/reference
   article: https://liliw-w.github.io/cacti/articles

@@ -11,10 +11,8 @@
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin QTL Detection">
-<meta name="description" content="CACTI is an R package for window-based multivariate chromatin QTL mapping, grouping correlated peaks into genomic windows, residualizing phenotypes, and testing multi-peak associations via a principal-component omnibus (PCO) framework.
-">
-<meta property="og:description" content="CACTI is an R package for window-based multivariate chromatin QTL mapping, grouping correlated peaks into genomic windows, residualizing phenotypes, and testing multi-peak associations via a principal-component omnibus (PCO) framework.
-">
+<meta name="description" content="Implements the CACTI peak-window method for multi-peak chromatin QTL mapping.">
+<meta property="og:description" content="Implements the CACTI peak-window method for multi-peak chromatin QTL mapping.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -34,8 +32,8 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="active nav-item"><a class="nav-link" href="index.html">Home</a></li>
-<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="articles/index.html">Vignettes</a></li>
+<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -56,13 +54,24 @@
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p><img src="reference/figures/cacti_overview.png" width="2055"></p>
-<p>CACTI (<strong>C</strong>hrom<strong>A</strong>tin quantitative lo<strong>C</strong>i of mul<strong>TI</strong>ple peaks) implements the <em>peak-window</em> version of the CACTI method for chromatin QTL mapping.</p>
-<p>The package provides a pipeline to:</p>
+<p>CACTI (<strong>C</strong>hrom<strong>A</strong>tin quantitative lo<strong>C</strong>i of mul<strong>TI</strong>ple peaks) implements a powerful method for chromatin QTL mapping that leverages the correlation structure of nearby regulatory elements.</p>
+<p>The package offers two main modules:</p>
+<ol style="list-style-type: decimal">
+<li><strong>CACTI (Peak-window method):</strong></li>
+</ol>
 <ul>
-<li>group nearby peaks into <strong>non-overlapping windows</strong> of fixed genomic size,</li>
-<li>residualize peak intensities with respect to covariates,</li>
-<li>run <strong>multi-peak</strong> association tests using a principal-component omnibus (PCO) test, and</li>
-<li>aggregate results across chromosomes and compute <strong>window-level FDR</strong>.</li>
+<li>Groups pre-defined peaks into non-overlapping windows of fixed genomic size.</li>
+<li>Residualizes peak intensities with respect to covariates.</li>
+<li>Runs multi-peak association tests using a principal-component omnibus (PCO) test.</li>
+<li>Aggregates results and computes window-level FDR.</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li><strong>CACTI-S (Sample-based pipeline):</strong></li>
+</ol>
+<ul>
+<li>An end-to-end preprocessing workflow to go from raw BAM files to normalized phenotype matrices to QTL mapping.</li>
+<li>Performs segmentation, read counting, QC/filtering, and normalization.</li>
+<li>Runs cis-QTL mapping to generate input files for CACTI.</li>
 </ul>
 <hr>
 </div>
@@ -78,201 +87,31 @@
 <hr>
 </div>
 <div class="section level2">
-<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
-<p>After installing the package, see <a href="https://liliw-w.github.io/cacti/">full documentation and vignettes</a>.</p>
-<p>Also see in the package -</p>
+<div class="section level3">
+<h3 id="vignettes">Vignettes<a class="anchor" aria-label="anchor" href="#vignettes"></a>
+</h3>
+<p>See the <a href="https://liliw-w.github.io/cacti/">full documentation and vignettes</a> for -</p>
 <ul>
-<li>The vignette <strong>“CACTI peak-window pipeline”</strong> that gives a more detailed walk through of inputs, outputs, and example usage.</li>
+<li><p>CACTI Peak-Window Pipeline</p></li>
+<li><p>CACTI-S Pipeline</p></li>
 </ul>
+<p>Vignettes can also be viewed within the installed package -</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"cacti_peak_window"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span></code></pre></div>
-<ul>
-<li>Main functions documentation -</li>
-</ul>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"cacti_peak_window"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"cacti_s_prep"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="main-functions-documentation">Main functions documentation<a class="anchor" aria-label="anchor" href="#main-functions-documentation"></a>
+</h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="op">?</span><span class="va">cacti</span></span>
-<span><span class="op">?</span><span class="va">cacti_run_chr</span></span>
+<code class="sourceCode R"><span><span class="op">?</span><span class="va">cacti_run_chr</span></span>
 <span><span class="op">?</span><span class="va">cacti_run_genome</span></span>
-<span><span class="op">?</span><span class="va">cacti_add_fdr</span></span></code></pre></div>
+<span><span class="op">?</span><span class="va">cacti_add_fdr</span></span>
+<span><span class="op">?</span><span class="va">cacti_s_prep</span></span></code></pre></div>
 <hr>
 </div>
-<div class="section level2">
-<h2 id="bundled-example-data">Bundled example data<a class="anchor" aria-label="anchor" href="#bundled-example-data"></a>
-</h2>
-<p>The package includes a small toy dataset derived from Aracena et al. to demonstrate the pipeline:</p>
-<pre class="text"><code><span><span class="va">inst</span><span class="op">/</span><span class="va">extdata</span><span class="op">/</span></span>
-<span>  <span class="va">test_pheno_meta.bed</span></span>
-<span>  <span class="va">test_pheno.txt</span></span>
-<span>  <span class="va">test_covariates.txt</span></span>
-<span>  <span class="va">test_qtl_sum_stats_chr5.txt.gz</span></span></code></pre>
-<p>You can access these files using <code><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file()</a></code>:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">file_pheno_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_pheno_meta.bed"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">file_pheno</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_pheno.txt"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">file_cov</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_covariates.txt"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">qtl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_qtl_sum_stats_chr5.txt.gz"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span></code></pre></div>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="input-file-formats">Input file formats<a class="anchor" aria-label="anchor" href="#input-file-formats"></a>
-</h2>
-<div class="section level3">
-<h3 id="peak-metadata-file_pheno_meta">Peak metadata (<code>file_pheno_meta</code>)<a class="anchor" aria-label="anchor" href="#peak-metadata-file_pheno_meta"></a>
-</h3>
-<p>A BED-like table describing peaks:</p>
-<ul>
-<li>Example: <code>test_pheno_meta.bed</code>
-</li>
-<li>Required columns:
-<ul>
-<li>
-<code>phe_chr</code>: chromosome (e.g. <code>"chr5"</code>)</li>
-<li>
-<code>phe_from</code>: peak start (integer, <code>&lt; phe_to</code>)</li>
-<li>
-<code>phe_to</code>: peak end (integer)</li>
-<li>
-<code>phe_id</code>: peak identifier (unique)</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="phenotype-matrix-file_pheno">Phenotype matrix (<code>file_pheno</code>)<a class="anchor" aria-label="anchor" href="#phenotype-matrix-file_pheno"></a>
-</h3>
-<p>Peak intensity matrix:</p>
-<ul>
-<li>Example: <code>test_pheno.txt</code>
-</li>
-<li>Layout:
-<ul>
-<li>Rows = features (peaks)</li>
-<li>First column = feature ID (matching <code>phe_id</code>)</li>
-<li>Remaining columns = samples</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="covariate-matrix-file_cov">Covariate matrix (<code>file_cov</code>)<a class="anchor" aria-label="anchor" href="#covariate-matrix-file_cov"></a>
-</h3>
-<p>Covariates per sample:</p>
-<ul>
-<li>Example: <code>test_covariates.txt</code>
-</li>
-<li>Layout:
-<ul>
-<li>Rows = covariates</li>
-<li>First column = covariate ID</li>
-<li>Remaining columns = samples</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="qtl-summary-statistics-qtl_file">QTL summary statistics (<code>qtl_file</code>)<a class="anchor" aria-label="anchor" href="#qtl-summary-statistics-qtl_file"></a>
-</h3>
-<p>cis-QTL summary statistics per chromosome:</p>
-<ul>
-<li>Example: <code>test_qtl_sum_stats_chr5.txt.gz</code>
-</li>
-<li>Required columns:
-<ul>
-<li>
-<code>phe_id</code>: peak ID (matching phenotype and metadata)</li>
-<li>
-<code>var_id</code>: variant ID</li>
-<li>
-<code>z</code>: z-score for the peak–SNP association</li>
-</ul>
-</li>
-</ul>
-<hr>
-</div>
-</div>
-<div class="section level2">
-<h2 id="quick-start-single-chromosome-pipeline-cacti_run_chr">Quick start: single-chromosome pipeline (<code>cacti_run_chr()</code>)<a class="anchor" aria-label="anchor" href="#quick-start-single-chromosome-pipeline-cacti_run_chr"></a>
-</h2>
-<p><code><a href="reference/cacti_run_chr.html">cacti_run_chr()</a></code> runs the full peak-window pipeline for <strong>one chromosome</strong>:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">out_prefix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"cacti_chr5_"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">res_single_chr</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cacti_run_chr.html">cacti_run_chr</a></span><span class="op">(</span></span>
-<span>  window_size     <span class="op">=</span> <span class="st">"50kb"</span>,</span>
-<span>  file_pheno_meta <span class="op">=</span> <span class="va">file_pheno_meta</span>,</span>
-<span>  file_pheno      <span class="op">=</span> <span class="va">file_pheno</span>,</span>
-<span>  file_cov        <span class="op">=</span> <span class="va">file_cov</span>,</span>
-<span>  chr             <span class="op">=</span> <span class="st">"chr5"</span>,</span>
-<span>  qtl_file        <span class="op">=</span> <span class="va">qtl_file</span>,</span>
-<span>  out_prefix      <span class="op">=</span> <span class="va">out_prefix</span>,</span>
-<span>  min_peaks       <span class="op">=</span> <span class="fl">2</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">res_single_chr</span></span></code></pre></div>
-<p>This will:</p>
-<ol style="list-style-type: decimal">
-<li>Group peaks into non-overlapping windows (50 kb).<br>
-</li>
-<li>Residualize the phenotype matrix with respect to covariates.<br>
-</li>
-<li>Run CACTI association tests on chr5.</li>
-</ol>
-<p><code>res_single_chr</code> is a list containing the paths to:</p>
-<ul>
-<li>
-<code>file_peak_group</code> – window-level group table<br>
-</li>
-<li>
-<code>file_peak_group_peaklevel</code> – peak-level group assignment<br>
-</li>
-<li>
-<code>file_pheno_cov_residual</code> – residualized phenotype matrix<br>
-</li>
-<li>
-<code>file_p_peak_group</code> – window-level p-values for chr5</li>
-</ul>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="quick-start-genome-wide-wrapper-cacti_run_genome">Quick start: genome-wide wrapper (<code>cacti_run_genome()</code>)<a class="anchor" aria-label="anchor" href="#quick-start-genome-wide-wrapper-cacti_run_genome"></a>
-</h2>
-<p><code><a href="reference/cacti_run_genome.html">cacti_run_genome()</a></code> loops over chromosomes, runs <code><a href="reference/cacti_run_chr.html">cacti_run_chr()</a></code> for each, and then combines results to compute window-level FDR.</p>
-<p>For the toy data, we only have chr5, but the usage pattern is the same:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">out_prefix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"cacti_genome_"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">res_genome</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cacti_run_genome.html">cacti_run_genome</a></span><span class="op">(</span></span>
-<span>  window_size     <span class="op">=</span> <span class="st">"50kb"</span>,</span>
-<span>  file_pheno_meta <span class="op">=</span> <span class="va">file_pheno_meta</span>,</span>
-<span>  file_pheno      <span class="op">=</span> <span class="va">file_pheno</span>,</span>
-<span>  file_cov        <span class="op">=</span> <span class="va">file_cov</span>,</span>
-<span>  chrs            <span class="op">=</span> <span class="st">"chr5"</span>,                 <span class="co"># toy example: one chromosome</span></span>
-<span>  qtl_files       <span class="op">=</span> <span class="va">qtl_file</span>,</span>
-<span>  out_prefix      <span class="op">=</span> <span class="va">out_prefix</span>,</span>
-<span>  file_fdr_out    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"cacti_fdr_chr5.txt.gz"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">res_genome</span></span></code></pre></div>
-<p><code>res_genome</code> is a list containing the paths to:</p>
-<ul>
-<li>
-<code>file_peak_group</code> – window-level group table<br>
-</li>
-<li>
-<code>file_peak_group_peaklevel</code> – peak-level group assignment<br>
-</li>
-<li>
-<code>file_pheno_cov_residual</code> – residualized phenotype matrix<br>
-</li>
-<li>
-<code>file_p_peak_group</code> – window-level p-value files for all chromosome</li>
-<li>
-<code>file_fdr_out</code> – combined FDR-added window-level results.</li>
-</ul>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>

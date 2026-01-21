@@ -117,3 +117,44 @@ once, aggregating all chromosomes to obtain q-values for the top-hit
 p-values in each window.
 
 ## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Example (chr5 as all chr)
+
+file_pheno_meta <- system.file(
+  "extdata", "test_pheno_meta.bed",
+  package = "cacti"
+)
+
+file_pheno <- system.file(
+  "extdata", "test_pheno.txt",
+  package = "cacti"
+)
+
+file_cov <- system.file(
+  "extdata", "test_covariates.txt",
+  package = "cacti"
+)
+
+qtl_file <- system.file(
+  "extdata", "test_qtl_sum_stats_chr5.txt.gz",
+  package = "cacti"
+)
+
+out_prefix <- tempfile("cacti_genome_")
+
+res <- cacti_run_genome(
+  window_size = "50kb",
+  file_pheno_meta = file_pheno_meta,
+  file_pheno = file_pheno,
+  file_cov = file_cov,
+  chrs = "chr5",
+  qtl_files = qtl_file,
+  out_prefix = out_prefix,
+  dir_pco = system.file("pco", package = "cacti"),
+  min_peaks = 2,
+  file_fdr_out = file.path(tempdir(), "cacti_fdr_chr5.txt.gz")
+)
+} # }
+```

@@ -5,46 +5,50 @@ url: https://liliw-w.github.io/cacti
 
 home:
   title: "CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin QTL Detection"
-  description: >
-    CACTI is an R package for window-based multivariate chromatin QTL mapping,
-    grouping correlated peaks into genomic windows, residualizing phenotypes,
-    and testing multi-peak associations via a principal-component omnibus (PCO) framework.
 
 navbar:
   structure:
     left:
       - home
-      - reference
       - articles
+      - reference
   components:
     home:
       text: "Home"
       href: index.html
-    reference:
-      text: "Reference"
-      href: reference/index.html
     articles:
       text: "Vignettes"
       href: articles/index.html
+    reference:
+      text: "Reference"
+      href: reference/index.html
 
 reference:
-  - title: "Overview"
-    contents:
-      - cacti
-
-  - title: "Main workflows"
+  - title: "CACTI peak-window cQTL mapping pipeline"
     contents:
       - cacti_run_chr
       - cacti_run_genome
 
+  - title: "CACTI-S (Segment-based data preparation & mapping)"
+    contents:
+      - cacti_s_prep
+
   - title: "Building blocks"
+    desc: "Low-level functions for segmentation, counting, preprocessing, grouping, and testing."
     contents:
       - cacti_group_peak_window
       - cacti_pheno_cov_residual
       - cacti_cal_p
       - cacti_add_fdr
+      - cacti_s_create_segments
+      - cacti_s_count
+      - cacti_s_preprocess
+      - cacti_s_map_cis
 
 articles:
-  - title: "CACTI peak-window pipeline"
+  - title: "Vignettes"
+    navbar: ~
     contents:
       - cacti_peak_window
+      - cacti_s_prep
+

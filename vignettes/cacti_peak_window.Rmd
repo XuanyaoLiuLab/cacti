@@ -15,21 +15,17 @@ knitr::opts_chunk$set(
 )
 ```
 
-## 1. Introduction
+## Introduction
 
 The `cacti` package implements the **CACTI peak-window method** for chromatin QTL mapping.  
+
 It is designed to:
 
 - group nearby peaks into **non-overlapping windows**,  
 - residualize peak intensities with respect to covariates,  
-- test association between genetic variants and **multi-peak windows** using a
-  principal-component omnibus (PCO) test, and  
+- test association between genetic variants and **multi-peak windows** using a principal-component omnibus (PCO) test, and  
 - optionally aggregate per-chromosome results and compute **window-level FDR**.
 
-The main user-facing functions in this vignette are:
-
-- `cacti_run_chr()` – run the full CACTI peak-window pipeline for **one chromosome**,  
-- `cacti_run_genome()` – run the pipeline across **multiple chromosomes** and add FDR.
 
 This vignette explains:
 
@@ -38,9 +34,27 @@ This vignette explains:
 3. The **output files** produced by the pipeline.  
 4. Example usage with bundled toy data under `inst/extdata/`.
 
+
+The main user-facing functions in this vignette are:
+
+- `cacti_run_chr()` – run the full CACTI peak-window pipeline for **one chromosome**,  
+- `cacti_run_genome()` – run the pipeline across **multiple chromosomes** and add FDR.
+
+
+Lower-level building blocks are:
+    
+| Function | Role | Description |
+| :--- | :--- | :--- |
+| **`cacti_run_genome`** | **Wrapper** | Master function that runs the pipeline across all chromosomes and computes global FDR. |
+| **`cacti_run_chr`** | **Wrapper** | Runs the full analysis pipeline for a single chromosome. |
+| `cacti_peak_group` | Step 1 | Groups input peaks into non-overlapping windows. |
+| `cacti_pheno_residual` | Step 2 | Residualizes the peak matrix with respect to covariates. |
+| `cacti_pco` | Step 3 | Performs the Principal Component Omnibus (PCO) test on a set of peaks and variants. |
+| `cacti_add_fdr` | Step 4 | Aggregates p-values from all chromosomes and calculates window-level FDR. |
+
 ---
 
-## 2. Overview of the peak-window pipeline
+## Part 1: Overview of the peak-window pipeline
 
 The CACTI peak-window pipeline has three main steps:
 
@@ -66,7 +80,7 @@ Across all chromosomes, `cacti_add_fdr()` (used by `cacti_run_genome()`) aggrega
 
 ---
 
-## 3. Input file formats
+## Part 2: Input file formats
 
 This section describes the expected columns and layout of each input file type.
 
@@ -80,7 +94,7 @@ inst/extdata/
   test_qtl_sum_stats_chr5.txt.gz
 ```
 
-### 3.1 Peak metadata (pheno meta / BED-like)
+### 1. Peak metadata (pheno meta / BED-like)
 
 The **peak metadata** file describes the genomic coordinates and IDs of peaks.
 
@@ -108,7 +122,7 @@ head(data.table::fread(file_pheno_meta))
 
 ---
 
-### 3.2 Phenotype matrix (peak intensity)
+### 2. Phenotype matrix (peak intensity)
 
 The **phenotype matrix** contains peak intensities (or other quantitative trait values).
 
@@ -133,7 +147,7 @@ head(data.table::fread(file_pheno))[, 1:5]
 
 ---
 
-### 3.3 Covariate matrix
+### 3. Covariate matrix
 
 The **covariate matrix** encodes covariates for each sample (e.g. PCs, batch, sex, etc.).
 
@@ -158,7 +172,7 @@ head(data.table::fread(file_cov))[, 1:5]
 
 ---
 
-### 3.4 QTL summary statistics
+### 4. QTL summary statistics
 
 The **cis-QTL summary stats** file contains association summary statistics for peak–SNP pairs.
 
@@ -183,11 +197,11 @@ head(data.table::fread(qtl_file))
 
 ---
 
-## 4. Output files from `cacti_run_chr()`
+## Part 3: Output files from `cacti_run_chr()`
 
 `cacti_run_chr()` is the main function for running the CACTI peak-window pipeline on a **single chromosome**.
 
-### 4.1 Overview
+### 1. Overview
 
 Calling:
 
@@ -212,7 +226,7 @@ will:
 
 It returns a named list of output paths, and writes the following files:
 
-### 4.2 Window-level grouping file
+### 2. Window-level grouping file
 
 - Path: `res_single_chr$file_peak_group`  
 - Produced by: `cacti_group_peak_window()`
@@ -226,7 +240,7 @@ Columns:
 - `pid_group` – semicolon-separated list of peak IDs in the window,  
 - `n_pid_group` – number of peaks in the window.
 
-### 4.3 Peak-level grouping file
+### 3. Peak-level grouping file
 
 - Path: `res_single_chr$file_peak_group_peaklevel`
 
@@ -238,7 +252,7 @@ Columns:
 - `group` – window ID to which the peak belongs,  
 - `n_pid_group` – number of peaks in that window.
 
-### 4.4 Residualized phenotype matrix
+### 4. Residualized phenotype matrix
 
 - Path: `res_single_chr$file_pheno_cov_residual`  
 
@@ -248,7 +262,7 @@ Same layout as the input phenotype matrix:
 - First column = `ID` (peak IDs),  
 - Remaining columns = residualized values for each sample.
 
-### 4.5 Per-window p-value file for the chromosome
+### 5. Per-window p-value file for the chromosome
 
 - Path: `res_single_chr$file_p_peak_group`  
 
@@ -262,7 +276,9 @@ Each row corresponds to a `(group, snp)` pair:
 
 ---
 
-## 5. Per-chromosome example: `cacti_run_chr()`
+## Part 4: Examples
+
+### 1. Per-chromosome example: `cacti_run_chr()`
 
 Below is an example of running the full pipeline on the **toy chr5 data** included in `inst/extdata/`.
 
@@ -308,7 +324,7 @@ res_single_chr
 
 ---
 
-## 6. Genome-wide wrapper: `cacti_run_genome()`
+### 2. Genome-wide wrapper: `cacti_run_genome()`
 
 `cacti_run_genome()` provides a convenience wrapper for running the pipeline across **multiple chromosomes**, then aggregating the p-values and adding FDR via `cacti_add_fdr()`.
 
@@ -364,7 +380,7 @@ res_genome
 
 ---
 
-## 7. Summary
+## Summary
 
 In this vignette, we:
 

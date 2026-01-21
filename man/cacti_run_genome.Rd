@@ -101,7 +101,7 @@ qtl_file <- system.file(
 
 out_prefix <- tempfile("cacti_genome_")
 
-res <- cacti_run_chr(
+res <- cacti_run_genome(
   window_size = "50kb",
   file_pheno_meta = file_pheno_meta,
   file_pheno = file_pheno,
@@ -110,7 +110,7 @@ res <- cacti_run_chr(
   qtl_files = qtl_file,
   out_prefix = out_prefix,
   dir_pco = system.file("pco", package = "cacti"),
-  min_peaks = 2
+  min_peaks = 2,
   file_fdr_out = file.path(tempdir(), "cacti_fdr_chr5.txt.gz")
 )
 }

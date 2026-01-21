@@ -1,9 +1,10 @@
 # CACTI peak-window pipeline
 
-## 1. Introduction
+## Introduction
 
 The `cacti` package implements the **CACTI peak-window method** for
-chromatin QTL mapping.  
+chromatin QTL mapping.
+
 It is designed to:
 
 - group nearby peaks into **non-overlapping windows**,  
@@ -13,13 +14,6 @@ It is designed to:
 - optionally aggregate per-chromosome results and compute **window-level
   FDR**.
 
-The main user-facing functions in this vignette are:
-
-- [`cacti_run_chr()`](https://liliw-w.github.io/cacti/reference/cacti_run_chr.md)
-  – run the full CACTI peak-window pipeline for **one chromosome**,  
-- [`cacti_run_genome()`](https://liliw-w.github.io/cacti/reference/cacti_run_genome.md)
-  – run the pipeline across **multiple chromosomes** and add FDR.
-
 This vignette explains:
 
 1.  The overall workflow.  
@@ -27,9 +21,27 @@ This vignette explains:
 3.  The **output files** produced by the pipeline.  
 4.  Example usage with bundled toy data under `inst/extdata/`.
 
+The main user-facing functions in this vignette are:
+
+- [`cacti_run_chr()`](https://liliw-w.github.io/cacti/reference/cacti_run_chr.md)
+  – run the full CACTI peak-window pipeline for **one chromosome**,  
+- [`cacti_run_genome()`](https://liliw-w.github.io/cacti/reference/cacti_run_genome.md)
+  – run the pipeline across **multiple chromosomes** and add FDR.
+
+Lower-level building blocks are:
+
+| Function               | Role        | Description                                                                            |
+|:-----------------------|:------------|:---------------------------------------------------------------------------------------|
+| **`cacti_run_genome`** | **Wrapper** | Master function that runs the pipeline across all chromosomes and computes global FDR. |
+| **`cacti_run_chr`**    | **Wrapper** | Runs the full analysis pipeline for a single chromosome.                               |
+| `cacti_peak_group`     | Step 1      | Groups input peaks into non-overlapping windows.                                       |
+| `cacti_pheno_residual` | Step 2      | Residualizes the peak matrix with respect to covariates.                               |
+| `cacti_pco`            | Step 3      | Performs the Principal Component Omnibus (PCO) test on a set of peaks and variants.    |
+| `cacti_add_fdr`        | Step 4      | Aggregates p-values from all chromosomes and calculates window-level FDR.              |
+
 ------------------------------------------------------------------------
 
-## 2. Overview of the peak-window pipeline
+## Part 1: Overview of the peak-window pipeline
 
 The CACTI peak-window pipeline has three main steps:
 
@@ -64,7 +76,7 @@ window.
 
 ------------------------------------------------------------------------
 
-## 3. Input file formats
+## Part 2: Input file formats
 
 This section describes the expected columns and layout of each input
 file type.
@@ -79,7 +91,7 @@ inst/extdata/
   test_qtl_sum_stats_chr5.txt.gz
 ```
 
-### 3.1 Peak metadata (pheno meta / BED-like)
+### 1. Peak metadata (pheno meta / BED-like)
 
 The **peak metadata** file describes the genomic coordinates and IDs of
 peaks.
@@ -120,7 +132,7 @@ head(data.table::fread(file_pheno_meta))
 
 ------------------------------------------------------------------------
 
-### 3.2 Phenotype matrix (peak intensity)
+### 2. Phenotype matrix (peak intensity)
 
 The **phenotype matrix** contains peak intensities (or other
 quantitative trait values).
@@ -157,7 +169,7 @@ head(data.table::fread(file_pheno))[, 1:5]
 
 ------------------------------------------------------------------------
 
-### 3.3 Covariate matrix
+### 3. Covariate matrix
 
 The **covariate matrix** encodes covariates for each sample (e.g. PCs,
 batch, sex, etc.).
@@ -189,7 +201,7 @@ head(data.table::fread(file_cov))[, 1:5]
 
 ------------------------------------------------------------------------
 
-### 3.4 QTL summary statistics
+### 4. QTL summary statistics
 
 The **cis-QTL summary stats** file contains association summary
 statistics for peak–SNP pairs.
@@ -228,13 +240,13 @@ head(data.table::fread(qtl_file))
 
 ------------------------------------------------------------------------
 
-## 4. Output files from `cacti_run_chr()`
+## Part 3: Output files from `cacti_run_chr()`
 
 [`cacti_run_chr()`](https://liliw-w.github.io/cacti/reference/cacti_run_chr.md)
 is the main function for running the CACTI peak-window pipeline on a
 **single chromosome**.
 
-### 4.1 Overview
+### 1. Overview
 
 Calling:
 
@@ -259,7 +271,7 @@ will:
 
 It returns a named list of output paths, and writes the following files:
 
-### 4.2 Window-level grouping file
+### 2. Window-level grouping file
 
 - Path: `res_single_chr$file_peak_group`  
 - Produced by:
@@ -274,7 +286,7 @@ Columns:
 - `pid_group` – semicolon-separated list of peak IDs in the window,  
 - `n_pid_group` – number of peaks in the window.
 
-### 4.3 Peak-level grouping file
+### 3. Peak-level grouping file
 
 - Path: `res_single_chr$file_peak_group_peaklevel`
 
@@ -286,7 +298,7 @@ Columns:
 - `group` – window ID to which the peak belongs,  
 - `n_pid_group` – number of peaks in that window.
 
-### 4.4 Residualized phenotype matrix
+### 4. Residualized phenotype matrix
 
 - Path: `res_single_chr$file_pheno_cov_residual`
 
@@ -296,7 +308,7 @@ Same layout as the input phenotype matrix:
 - First column = `ID` (peak IDs),  
 - Remaining columns = residualized values for each sample.
 
-### 4.5 Per-window p-value file for the chromosome
+### 5. Per-window p-value file for the chromosome
 
 - Path: `res_single_chr$file_p_peak_group`
 
@@ -312,7 +324,9 @@ Each row corresponds to a `(group, snp)` pair:
 
 ------------------------------------------------------------------------
 
-## 5. Per-chromosome example: `cacti_run_chr()`
+## Part 4: Examples
+
+### 1. Per-chromosome example: `cacti_run_chr()`
 
 Below is an example of running the full pipeline on the **toy chr5
 data** included in `inst/extdata/`.
@@ -353,44 +367,56 @@ res_single_chr <- cacti_run_chr(
   out_prefix      = out_prefix,
   min_peaks       = 2
 )
-#> [1/3] Group peaks into non-overlapping windows …
-#> [2/3] Residualize phenotype by covariates …
-#> [3/3] Run pvalue for chr5 …
+#> =======================================================
+#>  CACTI Pipeline
+#> =======================================================
+#> Output Directory: /tmp/RtmpEpmGBp
 #> 
-#>  CACTI peak-window pipeline for chr5 completed successfully!
-#> Run summary:
+#> [Step 1/3] Group peaks into non-overlapping windows …
+#> 
+#> [Step 2/3] Residualize phenotype by covariates …
+#> 
+#> [Step 3/3] Run pvalue for chr5 …
+#> 
+#> =======================================================
+#> 
+#>  CACTI pipeline for chr5 completed!
+#> =======================================================
+#> =======================================================
+#> ----------- Run summary -----------
 #> Chromosome:chr5
 #> Window size:50kb
 #> 
-#> Input files:
-#> Peaks BED:/tmp/RtmpIvhooj/temp_libpathfd7a42495c890/cacti/extdata/test_pheno_meta.bed
-#> Phenotype:/tmp/RtmpIvhooj/temp_libpathfd7a42495c890/cacti/extdata/test_pheno.txt
-#> Covariate:/tmp/RtmpIvhooj/temp_libpathfd7a42495c890/cacti/extdata/test_covariates.txt
-#> QTL summary stats:/tmp/RtmpIvhooj/temp_libpathfd7a42495c890/cacti/extdata/test_qtl_sum_stats_chr5.txt.gz
+#>  ----------- Input files -----------
+#> Peaks BED:/tmp/Rtmp3Gr0m6/temp_libpath38fcd93ba5e3b2/cacti/extdata/test_pheno_meta.bed
+#> Phenotype:/tmp/Rtmp3Gr0m6/temp_libpath38fcd93ba5e3b2/cacti/extdata/test_pheno.txt
+#> Covariate:/tmp/Rtmp3Gr0m6/temp_libpath38fcd93ba5e3b2/cacti/extdata/test_covariates.txt
+#> QTL summary stats:/tmp/Rtmp3Gr0m6/temp_libpath38fcd93ba5e3b2/cacti/extdata/test_qtl_sum_stats_chr5.txt.gz
 #> 
-#> Output files:
-#> Grouped peak: /tmp/RtmpYwsyPm/cacti_chr5_10442e6a507772_peak_group_window50kb.txt
-#> Grouped peak (peak as row):/tmp/RtmpYwsyPm/cacti_chr5_10442e6a507772_peak_group_window50kb_peak_as_row.txt
-#> Residual phenotype:/tmp/RtmpYwsyPm/cacti_chr5_10442e6a507772_pheno_cov_residual.txt
-#> Pval results (chr5): /tmp/RtmpYwsyPm/cacti_chr5_10442e6a507772_pval_window50kb_chr5.txt.gz
+#>  ----------- Output files -----------
+#>   [1] Grouped peak: /tmp/RtmpEpmGBp/cacti_chr5_39264c2f9c6d51_peak_group_window50kb.txt
+#>   [2] Grouped peak (peak as row):/tmp/RtmpEpmGBp/cacti_chr5_39264c2f9c6d51_peak_group_window50kb_peak_as_row.txt
+#>   [3] Residual phenotype:/tmp/RtmpEpmGBp/cacti_chr5_39264c2f9c6d51_pheno_cov_residual.txt
+#>   [4] Pval results (chr5): /tmp/RtmpEpmGBp/cacti_chr5_39264c2f9c6d51_pval_window50kb_chr5.txt.gz
+#> =======================================================
 
 res_single_chr
 #> $file_peak_group
-#> [1] "/tmp/RtmpYwsyPm/cacti_chr5_10442e6a507772_peak_group_window50kb.txt"
+#> [1] "/tmp/RtmpEpmGBp/cacti_chr5_39264c2f9c6d51_peak_group_window50kb.txt"
 #> 
 #> $file_peak_group_peaklevel
-#> [1] "/tmp/RtmpYwsyPm/cacti_chr5_10442e6a507772_peak_group_window50kb_peak_as_row.txt"
+#> [1] "/tmp/RtmpEpmGBp/cacti_chr5_39264c2f9c6d51_peak_group_window50kb_peak_as_row.txt"
 #> 
 #> $file_pheno_cov_residual
-#> [1] "/tmp/RtmpYwsyPm/cacti_chr5_10442e6a507772_pheno_cov_residual.txt"
+#> [1] "/tmp/RtmpEpmGBp/cacti_chr5_39264c2f9c6d51_pheno_cov_residual.txt"
 #> 
 #> $file_p_peak_group
-#> [1] "/tmp/RtmpYwsyPm/cacti_chr5_10442e6a507772_pval_window50kb_chr5.txt.gz"
+#> [1] "/tmp/RtmpEpmGBp/cacti_chr5_39264c2f9c6d51_pval_window50kb_chr5.txt.gz"
 ```
 
 ------------------------------------------------------------------------
 
-## 6. Genome-wide wrapper: `cacti_run_genome()`
+### 2. Genome-wide wrapper: `cacti_run_genome()`
 
 [`cacti_run_genome()`](https://liliw-w.github.io/cacti/reference/cacti_run_genome.md)
 provides a convenience wrapper for running the pipeline across
@@ -452,52 +478,65 @@ res_genome <- cacti_run_genome(
   out_prefix      = out_prefix,
   file_fdr_out    = file.path(tempdir(), "cacti_fdr_chr5.txt.gz")
 )
+#> =======================================================
+#>  CACTI Pipeline Genome-Wide
+#> =======================================================
+#> Output Directory: /tmp/RtmpEpmGBp
+#> --------------------------------------------------------
 #> === [I/III] Running CACTI peak-window pipeline genome-wide ===
-#> [1/3] Group peaks into non-overlapping windows …
-#> [2/3] Residualize phenotype by covariates …
-#> [3/3] Run pvalue for chr5 …
+#> --------------------------------------------------------
 #> 
-#>  CACTI peak-window pipeline for chr5 completed successfully!
+#> [Step 1/3] Group peaks into non-overlapping windows …
 #> 
-#> Input files:
-#> Peaks BED:/tmp/RtmpIvhooj/temp_libpathfd7a42495c890/cacti/extdata/test_pheno_meta.bed
-#> Phenotype:/tmp/RtmpIvhooj/temp_libpathfd7a42495c890/cacti/extdata/test_pheno.txt
-#> Covariate:/tmp/RtmpIvhooj/temp_libpathfd7a42495c890/cacti/extdata/test_covariates.txt
-#> QTL summary stats:/tmp/RtmpIvhooj/temp_libpathfd7a42495c890/cacti/extdata/test_qtl_sum_stats_chr5.txt.gz
+#> [Step 2/3] Residualize phenotype by covariates …
 #> 
-#> Output files:
-#> Grouped peak: /tmp/RtmpYwsyPm/cacti_genome_10442e171cd1ae_peak_group_window50kb.txt
-#> Grouped peak (peak as row):/tmp/RtmpYwsyPm/cacti_genome_10442e171cd1ae_peak_group_window50kb_peak_as_row.txt
-#> Residual phenotype:/tmp/RtmpYwsyPm/cacti_genome_10442e171cd1ae_pheno_cov_residual.txt
-#> Pval results (chr5): /tmp/RtmpYwsyPm/cacti_genome_10442e171cd1ae_pval_window50kb_chr5.txt.gz
+#> [Step 3/3] Run pvalue for chr5 …
+#> 
+#>  pipeline for chr5 completed!
+#> 
+#>  ----------- Input files -----------
+#> Peaks BED:/tmp/Rtmp3Gr0m6/temp_libpath38fcd93ba5e3b2/cacti/extdata/test_pheno_meta.bed
+#> Phenotype:/tmp/Rtmp3Gr0m6/temp_libpath38fcd93ba5e3b2/cacti/extdata/test_pheno.txt
+#> Covariate:/tmp/Rtmp3Gr0m6/temp_libpath38fcd93ba5e3b2/cacti/extdata/test_covariates.txt
+#> QTL summary stats:/tmp/Rtmp3Gr0m6/temp_libpath38fcd93ba5e3b2/cacti/extdata/test_qtl_sum_stats_chr5.txt.gz
+#> 
+#>  ----------- Output files -----------
+#>   [1] Grouped peak: /tmp/RtmpEpmGBp/cacti_genome_39264c5c3513dd_peak_group_window50kb.txt
+#>   [2] Grouped peak (peak as row):/tmp/RtmpEpmGBp/cacti_genome_39264c5c3513dd_peak_group_window50kb_peak_as_row.txt
+#>   [3] Residual phenotype:/tmp/RtmpEpmGBp/cacti_genome_39264c5c3513dd_pheno_cov_residual.txt
+#>   [4] Pval results (chr5): /tmp/RtmpEpmGBp/cacti_genome_39264c5c3513dd_pval_window50kb_chr5.txt.gz
+#> --------------------------------------------------------
 #> 
 #> === [II/III] Adding FDR across windows and chromosomes ===
+#> --------------------------------------------------------
+#> --------------------------------------------------------
 #> 
 #> === [III/III] Genome-wide CACTI peak-window pipeline completed with FDR! ===
-#> Run summary:
-#> Pvalue output: /tmp/RtmpYwsyPm/cacti_genome_10442e171cd1ae_pval_window50kb_chr5.txt.gz
-#> FDR output: /tmp/RtmpYwsyPm/cacti_fdr_chr5.txt.gz
+#> --------------------------------------------------------
+#> ----------- Run summary -----------
+#>   [1] Pvalue output: /tmp/RtmpEpmGBp/cacti_genome_39264c5c3513dd_pval_window50kb_chr5.txt.gz
+#>   [2] FDR output: /tmp/RtmpEpmGBp/cacti_fdr_chr5.txt.gz
 
 res_genome
 #> $file_peak_group
-#> [1] "/tmp/RtmpYwsyPm/cacti_genome_10442e171cd1ae_peak_group_window50kb.txt"
+#> [1] "/tmp/RtmpEpmGBp/cacti_genome_39264c5c3513dd_peak_group_window50kb.txt"
 #> 
 #> $file_peak_group_peaklevel
-#> [1] "/tmp/RtmpYwsyPm/cacti_genome_10442e171cd1ae_peak_group_window50kb_peak_as_row.txt"
+#> [1] "/tmp/RtmpEpmGBp/cacti_genome_39264c5c3513dd_peak_group_window50kb_peak_as_row.txt"
 #> 
 #> $file_pheno_cov_residual
-#> [1] "/tmp/RtmpYwsyPm/cacti_genome_10442e171cd1ae_pheno_cov_residual.txt"
+#> [1] "/tmp/RtmpEpmGBp/cacti_genome_39264c5c3513dd_pheno_cov_residual.txt"
 #> 
 #> $file_p_peak_group
-#> [1] "/tmp/RtmpYwsyPm/cacti_genome_10442e171cd1ae_pval_window50kb_chr5.txt.gz"
+#> [1] "/tmp/RtmpEpmGBp/cacti_genome_39264c5c3513dd_pval_window50kb_chr5.txt.gz"
 #> 
 #> $file_fdr_out
-#> [1] "/tmp/RtmpYwsyPm/cacti_fdr_chr5.txt.gz"
+#> [1] "/tmp/RtmpEpmGBp/cacti_fdr_chr5.txt.gz"
 ```
 
 ------------------------------------------------------------------------
 
-## 7. Summary
+## Summary
 
 In this vignette, we:
 

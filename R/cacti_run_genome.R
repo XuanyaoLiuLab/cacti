@@ -84,11 +84,8 @@ cacti_run_genome <- function(
     min_peaks = 2,
     file_fdr_out   = NULL
 ) {
-  suppressPackageStartupMessages(requireNamespace("data.table"))
-  suppressPackageStartupMessages(requireNamespace("dplyr"))
-
-
-  message("=== [I/III] Running CACTI peak-window pipeline genome-wide ===")
+  if (!requireNamespace("data.table", quietly = TRUE)) stop("data.table required.")
+  if (!requireNamespace("dplyr", quietly = TRUE)) stop("dplyr required.")
 
   # resolve qtl_files
   if (length(qtl_files) == 1L && grepl("\\{chr\\}", qtl_files)) {
@@ -107,13 +104,22 @@ cacti_run_genome <- function(
   out_dir <- dirname(out_prefix)
   if (!dir.exists(out_dir) && out_dir != ".") dir.create(out_dir, recursive = TRUE)
 
+  message("=======================================================")
+  message(" CACTI Pipeline Genome-Wide")
+  message("=======================================================")
+  message("Output Directory: ", out_dir)
+
+  message("--------------------------------------------------------")
+  message("=== [I/III] Running CACTI peak-window pipeline genome-wide ===")
+  message("--------------------------------------------------------")
+
   tag_window <- gsub("\\s+", "", as.character(window_size))
   file_peak_group  <- paste0(out_prefix, "_peak_group_window", tag_window, ".txt")
   file_peak_group_peaklevel  <- paste0(out_prefix, "_peak_group_window", tag_window, "_peak_as_row.txt")
   file_pheno_cov_residual  <- paste0(out_prefix, "_pheno_cov_residual.txt")
 
 
-  message("[1/3] Group peaks into non-overlapping windows …")
+  message("\n[Step 1/3] Group peaks into non-overlapping windows …")
   cacti_group_peak_window(
     window_size = window_size,
     file_pheno_meta = file_pheno_meta,
@@ -122,7 +128,7 @@ cacti_run_genome <- function(
   )
 
 
-  message("[2/3] Residualize phenotype by covariates …")
+  message("\n[Step 2/3] Residualize phenotype by covariates …")
   cacti_pheno_cov_residual(
     file_pheno = file_pheno,
     file_cov = file_cov,
@@ -134,7 +140,7 @@ cacti_run_genome <- function(
     this_chr <- chrs[i]
     this_qtl <- qtl_files[i]
 
-    message("[3/3] Run pvalue for ", this_chr, " …")
+    message("\n[Step 3/3] Run pvalue for ", this_chr, " …")
 
     file_p_peak_group <- file.path(out_dir, paste0(basename(out_prefix), "_pval_window", tag_window, "_", this_chr, ".txt.gz"))
     cacti_cal_p(
@@ -150,19 +156,19 @@ cacti_run_genome <- function(
 
 
     # ---- final summary message ----
-    message("\n CACTI peak-window pipeline for ", this_chr, " completed successfully!\n")
+    message("\n pipeline for ", this_chr, " completed!\n")
 
-    message("\nInput files:")
+    message("\n ----------- Input files -----------")
     message("Peaks BED:", file_pheno_meta)
     message("Phenotype:", file_pheno)
     message("Covariate:", file_cov)
     message("QTL summary stats:", this_qtl)
 
-    message("\nOutput files:")
-    message("Grouped peak: ", file_peak_group)
-    message("Grouped peak (peak as row):", file_peak_group_peaklevel)
-    message("Residual phenotype:", file_pheno_cov_residual)
-    message("Pval results (", this_chr, "): ", file_p_peak_group, "\n")
+    message("\n ----------- Output files -----------")
+    message("  [1] Grouped peak: ", file_peak_group)
+    message("  [2] Grouped peak (peak as row):", file_peak_group_peaklevel)
+    message("  [3] Residual phenotype:", file_pheno_cov_residual)
+    message("  [4] Pval results (", this_chr, "): ", file_p_peak_group, "\n")
 
   }
 
@@ -174,17 +180,22 @@ cacti_run_genome <- function(
     )
   }
 
+  message("--------------------------------------------------------")
   message("\n=== [II/III] Adding FDR across windows and chromosomes ===")
+  message("--------------------------------------------------------")
   cacti_add_fdr(
     file_all_pval = pval_files,
     file_fdr_out = file_fdr_out
   )
 
-  message("\n=== [III/III] Genome-wide CACTI peak-window pipeline completed with FDR! ===\n")
 
-  message("Run summary:")
-  message("Pvalue output: ", paste(pval_files, collapse = ";"))
-  message("FDR output: ", file_fdr_out)
+  message("--------------------------------------------------------")
+  message("\n=== [III/III] Genome-wide CACTI peak-window pipeline completed with FDR! ===\n")
+  message("--------------------------------------------------------")
+
+  message("----------- Run summary -----------")
+  message("  [1] Pvalue output: ", paste(pval_files, collapse = ";"))
+  message("  [2] FDR output: ", file_fdr_out)
 
   invisible(list(
     file_peak_group = file_peak_group,

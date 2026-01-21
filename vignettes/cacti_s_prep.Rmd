@@ -1,0 +1,305 @@
+---
+title: "CACTI-S: segment-based data preparation & mapping"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{CACTI-S: segment-based data preparation & mapping}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(cacti)
+```
+
+## Introduction
+
+The **CACTI-S (Segment-based)** pipeline is designed to process raw sequencing data (BAM files) into normalized phenotype matrices and QTL mapping. It handles the multi-step pipeline:
+
+-   **Segmentation**: Tile the genome into fixed-size segments (e.g., 1kb, 5kb).
+-   **Reads counting**: Count reads from raw BAM files into these segments.
+-   **Preprocessing**: Perform quality control and normalization.
+-   **Mapping**: Run cis-QTL mapping of the segments using `MatrixEQTL` to generate summary statistics required the multivariate CACTI model.
+
+This vignette explains:
+
+1.  The overall workflow.
+2.  The expected input files.
+3.  The output files produced by the pipeline.
+4.  Example usage with bundled toy data under `inst/extdata/`.
+
+The main user-facing function in this vignette is:
+
+-   `cacti_s_prep()` — a master wrapper that automates the entire workflow from BAM files to summary statistics.
+
+Lower-level building blocks are:
+
+| Function                  | Role        | Description                                                             |
+|:-----------------------|:-----------------------|:-----------------------|
+| **`cacti_s_prep`**        | **Wrapper** | Master function that runs the entire pipeline (Steps 1–4) sequentially. |
+| `cacti_s_create_segments` | Step 1      | Generates fixed-size segments to divide the genome.                     |
+| `cacti_s_count`           | Step 2      | Quantifies reads in segments using `Rsubread::featureCounts`.           |
+| `cacti_s_preprocess`      | Step 3      | Performs QC and normalization.                                          |
+| `cacti_s_map_cis`         | Step 4      | Runs cis-QTL mapping using `MatrixEQTL`.                                |
+
+## Part 1: Overview of the CACTI-S pipeline
+
+The CACTI-S pipeline has three main steps:
+
+1.  **Define and quantify genomic segments**
+
+-   Segmentation: Tiling the genome into fixed-size segments (e.g., 1kb, 5kb) or using a custom BED file.
+
+-   Quantification: Counting reads in these segments for every sample (BAM file) using `Rsubread`.
+
+-   Output: A raw counts matrix (Rows = Segments, Columns = Samples).
+
+2.  **Preprocess and normalize phenotypes**
+
+-   QC & Filtering & Normalization
+
+-   Output: A normalized phenotype matrix ready for QTL mapping.
+
+3.  **Cis-QTLs mapping**
+
+-   Input: Normalized phenotype matrix, genotype data (VCF), and covariates.
+
+-   Process: Runs \`MatrixEQTL for every variant–segment pair within a defined cis window (e.g., 100kb).
+
+-   Output: Cis-QTL summary statistics (Z-scores), which serve as the primary input for the CACTI multivariate test.
+
+## Part 2: Quick start
+
+For most users, the `cacti_s_prep()` function is the most convenient way to run the pipeline. It automates all steps and manages intermediate files.
+
+### 1. Locate test data
+
+We will use the small test files bundled with the `cacti` package. In a real analysis, these would be your actual BAM and VCF paths.
+
+```{r}
+# Locate the 4 test BAM files
+bam_files <- list.files(
+  system.file("extdata", package = "cacti"),
+  pattern = "Sample.*\\.bam$",
+  full.names = TRUE
+)
+
+# Locate Genotype (VCF), Covariate, and Peak files
+file_vcf   <- system.file("extdata", "test_geno.vcf", package = "cacti")
+file_cov   <- system.file("extdata", "test_cov.txt", package = "cacti")
+
+print(basename(c(bam_files, file_vcf, file_cov)))
+```
+
+### 2. Run the pipeline
+
+We will run the pipeline with the following settings:
+
+-   **Genome**: hg19\
+-   **Segment Size**: 5kb\
+-   **Filter Mode**: `cpm_threshold` (keep segments with peak intensity CPM \> 1 in \> 20% of samples)
+
+```{r}
+res <- cacti_s_prep(
+  file_bams = bam_files,
+  file_vcf = file_vcf,
+  file_cov = file_cov,
+  
+  out_dir = "../inst/extdata/test_results",
+  out_prefix = "test",
+
+  # Pipeline Parameters
+  genome = "hg19",
+  segment_size = "5kb",
+  filter_mode = "cpm_threshold",
+  min_cpm = 1,
+  min_prop = 0.2,
+
+  # Use 1 thread for this small demo
+  threads = 1
+)
+```
+
+### 3. Explore results
+
+The function returns a list of paths to the generated files.
+
+```{r}
+print(res)
+```
+
+#### Segments
+
+This file contains the segment positions that divide the whole genome.
+
+```{r}
+saf <- read.table(res$saf, header = TRUE, nrows = 5)
+knitr::kable(saf, caption = "Segment position (Top 5 Rows)")
+```
+
+#### Raw counts
+
+This file contains raw counts within the segments.
+
+```{r}
+raw_counts <- read.table(res$raw_counts, header = TRUE, nrows = 5)
+knitr::kable(raw_counts, caption = "Raw counts within segments (Top 5 Rows)")
+```
+
+#### Normalized phenotype matrix
+
+This file contains the filtered and normalized data with the segments positions data, ready for downstream analysis e.g. QTL mapping.
+
+```{r}
+pheno <- read.table(res$pheno, header = TRUE)
+knitr::kable(pheno, caption = "Normalized phenotype matrix (Top Rows)")
+```
+
+#### Cis-QTL summary statistics
+
+This file contains the cis-QTL mapping associations of individual segments.
+
+```{r}
+if (!is.null(res$qtl_stats)) {
+  qtl <- read.table(res$qtl_stats, header = TRUE, nrows = 5)
+  knitr::kable(qtl, caption = "Cis-QTL summary statistics (Top 5 hits)")
+}
+```
+
+## Part 3: Step-by-step workflow
+
+If you need more control (e.g., inspecting intermediate files) or customization, you can run the individual functions included in the whole pipeline separately.
+
+### Step 1: Create segments
+
+First, we generate a SAF (Simplified Annotation Format) file that defines the genomic segments.
+
+```{r}
+file_saf <- "../inst/extdata/test_results/test_segments.txt"
+
+cacti_s_create_segments(
+  file_saf_out = file_saf, # Output path for the SAF file.
+  genome = "hg19", # Genome build to use: "hg19" (default) or "hg38".
+  segment_size = "5kb" # Character like "5kb" or numeric bp (e.g. 5000).
+)
+```
+
+```{r}
+head(read.table(file_saf, header = TRUE))
+```
+
+### Step 2: Count Reads
+
+Next, we quantify reads falling into these segments for all BAM files.
+
+```{r}
+file_counts <- "../inst/extdata/test_results/test_raw_counts.txt"
+
+cacti_s_count(
+  file_bams = bam_files, # Character vector of BAM file paths.
+  file_saf = file_saf, # Path to the SAF annotation file (from \code{cacti_s_create_segments}).
+  file_counts_out = file_counts, # Output path for the counts matrix.
+  threads = 1 # Number of threads for featureCounts.
+)
+```
+
+```{r}
+head(read.table(file_counts, header = TRUE))
+```
+
+### Step 3: Preprocess
+
+We then perform preprocessing steps on the count data, including -
+
+-   **QC:** Remove segments with 0 reads in all samples.\
+-   **CPM:** Transform counts to log2(CPM + 0.5).\
+-   **Filter:** Remove noise segments based on `filter_mode`. We use the default mode: `cpm_threshold` (keep segments with peak intensity CPM \> 1 in \> 20% of samples). We also provide other ways for filtering -
+    -   `match_overlap_count`: Determines $N$, the number of segments overlapping regions in `filter_bed`. Then keeps the top $N$ segments by average intensity.
+    -   `prop`: Keeps the top `prop_top` proportion of segments by average intensity.
+-   **Standardize:** Z-score normalization per feature (Mean = 0, SD = 1).\
+-   **RankNorm:** Inverse Normal Transform per sample.
+
+```{r}
+file_pheno <- "../inst/extdata/test_results/test_pheno_norm.txt"
+file_pheno_meta <- "../inst/extdata/test_results/test_pheno_norm_meta.txt"
+
+cacti_s_preprocess(
+  file_raw_counts = file_counts, # Path to featureCounts output (from \code{cacti_s_count}).
+  file_out = file_pheno, # Output path for the processed phenotype file.
+  file_out_meta = file_pheno_meta, # Output path for the meta file of processed phenotype.
+  filter_mode = "cpm_threshold", # Strategy to select segments: "cpm_threshold" (default).
+  min_cpm = 1, # (For "cpm_threshold") Minimum CPM threshold (default 1).
+  min_prop = 0.2 # (For "cpm_threshold") Minimum proportion of samples (default 0.2).
+)
+```
+
+```{r}
+head(read.table(file_pheno, header = TRUE))
+```
+
+```{r}
+head(read.table(file_pheno_meta, header = TRUE))
+```
+
+### Step 4: Map Cis-QTLs
+
+Finally, we run the cis-QTL mapping using the normalized phenotype matrix using `MatrixEQTL`.
+
+```{r}
+file_qtl <- "../inst/extdata/test_results/test_cis_qtl_stats.txt"
+
+cacti_s_map_cis(
+  file_pheno = file_pheno, # Path to the processed phenotype file (from `cacti_s_preprocess`).
+  file_pheno_meta = file_pheno_meta, # Path for the meta file of processed phenotype.
+  file_cov = file_cov, # Path to covariate matrix.
+  file_vcf = file_vcf, # Path to input VCF file.
+  file_qtl_out = file_qtl, # Output path for summary statistics.
+  cis_dist = 100000, # Cis-window distance (default 100000 bp = 100kb).
+  p_threshold = 1.0 # P-value threshold for output (default 1.0, print all associations).
+)
+```
+
+```{r}
+head(read.table(file_qtl, header = TRUE))
+```
+
+## Part 3: Run multivariate association with CACTI
+
+The files generated by the CACTI-S pipeline serve as the primary inputs for the core CACTI analysis. These include the phenotype metadata (`file_pheno_meta`), normalized phenotypes (`file_pheno`), covariates (`file_cov`), and the QTL summary statistics (`file_qtl`). For more details, please see the vignette [here](docs/cacti_peak_window.html).
+
+With these inputs ready, we can directly run `cacti_run_chr()` (for a single chromosome) or `cacti_run_genome()` (for the whole genome).
+
+```{r}
+file_pheno <- "../inst/extdata/test_results/test_pheno_norm.txt"
+file_pheno_meta <- "../inst/extdata/test_results/test_pheno_norm_meta.txt"
+file_cov   <- "../inst/extdata/test_cov.txt"
+file_qtl <- "../inst/extdata/test_results/test_cis_qtl_stats.txt"
+out_prefix <- '../inst/extdata/test_results/cactis_chr1'
+chr <- "chr1"
+
+res_single_chr <- cacti_run_chr(
+  window_size     = "5kb",
+  file_pheno_meta = file_pheno_meta,
+  file_pheno      = file_pheno,
+  file_cov        = file_cov,
+  chr             = chr,
+  qtl_file        = file_qtl,
+  out_prefix      = out_prefix,
+  min_peaks       = 2
+)
+```
+
+The function returns a list containing the paths to the generated files:
+
+```{r}
+print(res_single_chr)
+```
+
+Below is a preview of the final association statistics:
+
+```{r}
+head(read.table(res_single_chr$file_p_peak_group, header = TRUE))
+```

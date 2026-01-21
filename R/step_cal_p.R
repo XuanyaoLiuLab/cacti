@@ -38,8 +38,7 @@ cacti_cal_p <- function(
 
   ## -- Read inputs --
   qtl_cis_norm <- data.table::fread(file_qtl_cis_norm, header = TRUE)
-  if(!all(c('phe_id', 'var_id', 'z') %in% colnames(qtl_cis_norm)))
-    stop("cis QTL summary stats must contain columns: 'phe_id', 'var_id', 'z'.")
+  if(!all(c('phe_id', 'var_id', 'z') %in% colnames(qtl_cis_norm))) stop("cis QTL summary stats must contain columns: 'phe_id', 'var_id', 'z'.")
 
   peak_group <- data.table::fread(file_peak_group, header = TRUE)
 
@@ -110,7 +109,7 @@ cacti_cal_p <- function(
     k <- k + 1
     if (k %% 100 == 0) cat(k, "-th group is running, out of", n_group + n_group, "group, on", chr, ".\n")
 
-    tmp_phe_id <- dplyr::filter(df_peak_group, group == !!group) |>
+    tmp_phe_id <- dplyr::filter(df_peak_group_single, group == !!group) |>
       dplyr::pull(pid_group)
 
     p_peak_group_list[[group]] <- dplyr::filter(qtl_cis_norm, phe_id %in% !!tmp_phe_id) |>
