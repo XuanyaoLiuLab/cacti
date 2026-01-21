@@ -21,6 +21,6 @@ devtools::check()
 
 # """
 # git add .
-# git commit -m “Added CACTI-S module and updated documentation”
-# git push origin main
+# git commit -m "Added CACTI-S module and updated documentation"
+# git push
 # """
