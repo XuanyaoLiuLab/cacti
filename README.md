@@ -45,7 +45,7 @@ library(cacti)
 
 ### Vignettes
 
-See the [full documentation and vignettes](https://github.com/XuanyaoLiuLab/cacti) for -
+See the [full documentation and vignettes](https://xuanyaoliulab.github.io/cacti/) for -
 
 - CACTI Peak-Window Pipeline
 
