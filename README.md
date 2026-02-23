@@ -28,9 +28,21 @@ The package offers two main modules:
 
 ## Installation
 
+### Prerequisites
+
+Before installing CACTI, ensure you have:
+
+- **R >= 4.0.0** - Check your version with `R.version.string`
+- **Pandoc** - Required for building vignettes. See [pandoc github](https://github.com/cderv/pandoc) for detailed instruction. 
+- **ACAT** - Required for association testing. See [ACAT github](https://github.com/yaowuliu/ACAT) for detailed instruction.
+- **qvalue** - Required for FDR correction. See [qvalue github](https://github.com/StoreyLab/qvalue) for detailed instruction.
+- **Rsubread** - Required for read counting in CACTI-S. See [Rsubread website](https://www.bioconductor.org/packages//2.10/bioc/html/Rsubread.html) for detailed instruction.
+
+
+
 ``` r
 install.packages("devtools")   # if not installed yet
-devtools::install_github("liliw-w/cacti", build_vignettes = TRUE)
+devtools::install_github("XuanyaoLiuLab/cacti", build_vignettes = TRUE)
 ```
 
 After installation:
