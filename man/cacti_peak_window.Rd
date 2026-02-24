@@ -2,7 +2,7 @@
 % Please edit documentation in R/cacti_peak_window.R
 \name{cacti_peak_window}
 \alias{cacti_peak_window}
-\title{Run CACTI peak-window pipeline end-to-end (genotype-first by default)}
+\title{Run CACTI peak-window pipeline end-to-end}
 \usage{
 cacti_peak_window(
   window_size = "50kb",
@@ -10,21 +10,23 @@ cacti_peak_window(
   file_pheno,
   file_cov,
   out_prefix,
-  chrs = NULL,
+  chr = "All",
   qtl_files = NULL,
   qtl_file = NULL,
   file_vcf = NULL,
   file_geno = NULL,
   file_snp_pos = NULL,
   cis_dist = 1e+05,
-  p_threshold = 1,
   dir_pco = system.file("pco", package = "cacti"),
   min_peaks = 1,
+  do_fdr = TRUE,
   file_fdr_out = NULL
 )
 }
 \arguments{
-\item{window_size}{Character like \code{"50kb"} (kb units) or numeric (bp).}
+\item{window_size}{Size of non-overlapping genomic windows used to group
+peaks before CACTI testing. Accepts values like \code{"50kb"} (kilobases) or
+numeric base-pair values (e.g., \code{50000}).}
 
 \item{file_pheno_meta}{Path to phenotype meta table with columns:
 \code{phe_id}, \code{phe_chr}, \code{phe_from}, \code{phe_to}.}
@@ -35,27 +37,30 @@ cacti_peak_window(
 
 \item{out_prefix}{Output prefix.}
 
-\item{chrs}{Optional chromosome vector. If \code{NULL}, inferred from \code{file_pheno_meta}.}
+\item{chr}{Chromosome selection. Use \code{"All"} (default) to iterate over all
+chromosomes in \code{file_pheno_meta}, or provide one chromosome label
+(e.g., \code{"chr5"}), or a character vector of labels.}
 
 \item{qtl_files}{Optional summary-stat input (vector, single path, or \code{{chr}} template).
-If \code{NULL}, MatrixEQTL is run first.}
+If \code{NULL}, MatrixEQTL is run first from genotype input.}
 
 \item{qtl_file}{Optional single-chromosome alias of \code{qtl_files}.}
 
-\item{file_vcf}{Optional VCF genotype input for MatrixEQTL-first mode.}
+\item{file_vcf}{Optional VCF genotype input for genotype-input mode.}
 
-\item{file_geno}{Optional genotype matrix input (if no VCF).}
+\item{file_geno}{Optional genotype matrix input for genotype-input mode (if no VCF).}
 
-\item{file_snp_pos}{Optional SNP-position input (if no VCF).}
+\item{file_snp_pos}{Optional SNP-position input for genotype-input mode (if no VCF).}
 
 \item{cis_dist}{Cis distance for MatrixEQTL (default 100kb).}
-
-\item{p_threshold}{P-value threshold for MatrixEQTL output (default 1.0).}
 
 \item{dir_pco}{Path to PCO helper files.}
 
 \item{min_peaks}{Minimum number of peaks required for a window to be included in testing.
 Included windows with 1 peak use univariate p-values; included windows with >=2 peaks use PCO.}
+
+\item{do_fdr}{Logical; if \code{TRUE} (default), run FDR correction across all
+processed chromosomes. If \code{FALSE}, skip FDR correction.}
 
 \item{file_fdr_out}{Optional output path for FDR-added result file.}
 }
@@ -64,10 +69,12 @@ Invisibly returns the output list from \code{\link[=cacti_run_genome]{cacti_run_
 }
 \description{
 High-level wrapper for the CACTI peak-window workflow.
-By default, this function runs MatrixEQTL first from genotype + phenotype +
-covariates, then runs standard CACTI peak-window testing.
+This function supports two input modes:
+1) genotype + phenotype + covariates (runs MatrixEQTL first),
+2) precomputed summary statistics (skips MatrixEQTL).
 }
 \details{
-Summary-statistics mode is optional: if \code{qtl_files} (or \code{qtl_file}) is
-provided, MatrixEQTL is skipped and those summary stats are used directly.
+By default (\code{chr = "All"}), it runs the genome-wide CACTI peak-window
+workflow via \code{\link[=cacti_run_genome]{cacti_run_genome()}} across all chromosomes present in
+\code{file_pheno_meta} and performs FDR correction.
 }

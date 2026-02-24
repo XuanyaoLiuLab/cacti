@@ -2,7 +2,7 @@
 % Please edit documentation in R/cacti_run_genome.R
 \name{cacti_run_genome}
 \alias{cacti_run_genome}
-\title{Run CACTI peak-window pipeline genome-wide and add FDR}
+\title{Run CACTI peak-window pipeline genome-wide}
 \usage{
 cacti_run_genome(
   window_size,
@@ -19,7 +19,8 @@ cacti_run_genome(
   out_prefix,
   dir_pco = system.file("pco", package = "cacti"),
   min_peaks = 1,
-  file_fdr_out = NULL
+  file_fdr_out = NULL,
+  do_fdr = TRUE
 )
 }
 \arguments{
@@ -71,6 +72,9 @@ Included windows with 1 peak use univariate p-values; included windows with >=2 
 
 \item{file_fdr_out}{Optional output path for the FDR-added window-level file.
 If \code{NULL}, a default filename is constructed from \code{out_prefix} and \code{window_size}.}
+
+\item{do_fdr}{Logical; if \code{TRUE} (default), run \code{\link[=cacti_add_fdr]{cacti_add_fdr()}} across
+all chromosomes. If \code{FALSE}, skip FDR correction.}
 }
 \value{
 Invisibly returns a named list of output paths with elements:
@@ -79,19 +83,19 @@ Invisibly returns a named list of output paths with elements:
 \item{file_peak_group_peaklevel}{Path to the peak-level group.}
 \item{file_pheno_residual}{Path to the residualized phenotype matrix.}
 \item{file_p_peak_group}{Path to the per-window p-value file for all chromosome.}
-\item{file_fdr_out}{Path to the FDR-added window-level result file.}
+\item{file_fdr_out}{Path to the FDR-added window-level result file (\code{NULL} when \code{do_fdr = FALSE}).}
 }
 }
 \description{
 This function is a convenience wrapper that runs the CACTI peak-window pipeline
-across multiple chromosomes and then computes window-level FDR across all
+across multiple chromosomes and optionally computes window-level FDR across all
 peak windows and chromosomes.
 }
 \details{
-For each chromosome in \code{chrs}, it calls \code{\link[=cacti_run_chr]{cacti_run_chr()}} and
-collects the per-window p-value files. It then calls \code{\link[=cacti_add_fdr]{cacti_add_fdr()}}
-once, aggregating all chromosomes to obtain q-values for the top-hit p-values
-in each window.
+For each chromosome in \code{chrs}, it runs per-window p-value calculation and
+collects per-chromosome p-value files. If \code{do_fdr = TRUE}, it then calls
+\code{\link[=cacti_add_fdr]{cacti_add_fdr()}} once, aggregating all chromosomes to obtain q-values for
+the top-hit p-values in each window.
 }
 \examples{
 \dontrun{

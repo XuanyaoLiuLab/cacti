@@ -1,13 +1,13 @@
-#' Run CACTI peak-window pipeline genome-wide and add FDR
+#' Run CACTI peak-window pipeline genome-wide
 #'
 #' This function is a convenience wrapper that runs the CACTI peak-window pipeline
-#' across multiple chromosomes and then computes window-level FDR across all
+#' across multiple chromosomes and optionally computes window-level FDR across all
 #' peak windows and chromosomes.
 #'
-#' For each chromosome in `chrs`, it calls [cacti_run_chr()] and
-#' collects the per-window p-value files. It then calls [cacti_add_fdr()]
-#' once, aggregating all chromosomes to obtain q-values for the top-hit p-values
-#' in each window.
+#' For each chromosome in `chrs`, it runs per-window p-value calculation and
+#' collects per-chromosome p-value files. If `do_fdr = TRUE`, it then calls
+#' [cacti_add_fdr()] once, aggregating all chromosomes to obtain q-values for
+#' the top-hit p-values in each window.
 #'
 #' @inheritParams cacti_run_chr
 #' @param chrs Character vector of chromosome labels (e.g., `paste0("chr", 1:22)`).
@@ -23,6 +23,8 @@
 #'   covariates to generate a CACTI-compatible cis-QTL file used for all `chrs`.
 #' @param file_fdr_out Optional output path for the FDR-added window-level file.
 #'   If `NULL`, a default filename is constructed from `out_prefix` and `window_size`.
+#' @param do_fdr Logical; if `TRUE` (default), run [cacti_add_fdr()] across
+#'   all chromosomes. If `FALSE`, skip FDR correction.
 #'
 #' @return Invisibly returns a named list of output paths with elements:
 #'   \describe{
@@ -30,7 +32,7 @@
 #'     \item{file_peak_group_peaklevel}{Path to the peak-level group.}
 #'     \item{file_pheno_residual}{Path to the residualized phenotype matrix.}
 #'     \item{file_p_peak_group}{Path to the per-window p-value file for all chromosome.}
-#'     \item{file_fdr_out}{Path to the FDR-added window-level result file.}
+#'     \item{file_fdr_out}{Path to the FDR-added window-level result file (`NULL` when `do_fdr = FALSE`).}
 #'   }
 #'
 #' @examples
@@ -84,7 +86,8 @@ cacti_run_genome <- function(
     out_prefix,
     dir_pco = system.file("pco", package = "cacti"),
     min_peaks = 1,
-    file_fdr_out   = NULL
+    file_fdr_out   = NULL,
+    do_fdr = TRUE
 ) {
   if (!requireNamespace("data.table", quietly = TRUE)) stop("data.table required.")
   if (!requireNamespace("dplyr", quietly = TRUE)) stop("dplyr required.")
@@ -194,30 +197,40 @@ cacti_run_genome <- function(
 
   }
 
-  if (is.null(file_fdr_out)) {
-    tag_window <- gsub("\\s+", "", as.character(window_size))
-    file_fdr_out <- file.path(
-      dirname(out_prefix),
-      paste0(basename(out_prefix), "_pval_window", tag_window, "_fdr_added.txt.gz")
+  if (isTRUE(do_fdr)) {
+    if (is.null(file_fdr_out)) {
+      tag_window <- gsub("\\s+", "", as.character(window_size))
+      file_fdr_out <- file.path(
+        dirname(out_prefix),
+        paste0(basename(out_prefix), "_pval_window", tag_window, "_fdr_added.txt.gz")
+      )
+    }
+
+    message("--------------------------------------------------------")
+    message("\n=== [II/III] Adding FDR across windows and chromosomes ===")
+    message("--------------------------------------------------------")
+    cacti_add_fdr(
+      file_all_pval = pval_files,
+      file_fdr_out = file_fdr_out
     )
+
+    message("--------------------------------------------------------")
+    message("\n=== [III/III] Genome-wide CACTI peak-window pipeline completed with FDR! ===\n")
+    message("--------------------------------------------------------")
+  } else {
+    file_fdr_out <- NULL
+    message("--------------------------------------------------------")
+    message("\n=== [II/II] Genome-wide CACTI peak-window pipeline completed (FDR skipped) ===\n")
+    message("--------------------------------------------------------")
   }
-
-  message("--------------------------------------------------------")
-  message("\n=== [II/III] Adding FDR across windows and chromosomes ===")
-  message("--------------------------------------------------------")
-  cacti_add_fdr(
-    file_all_pval = pval_files,
-    file_fdr_out = file_fdr_out
-  )
-
-
-  message("--------------------------------------------------------")
-  message("\n=== [III/III] Genome-wide CACTI peak-window pipeline completed with FDR! ===\n")
-  message("--------------------------------------------------------")
 
   message("----------- Run summary -----------")
   message("  [1] Pvalue output: ", paste(pval_files, collapse = ";"))
-  message("  [2] FDR output: ", file_fdr_out)
+  if (isTRUE(do_fdr)) {
+    message("  [2] FDR output: ", file_fdr_out)
+  } else {
+    message("  [2] FDR output: skipped (`do_fdr = FALSE`)")
+  }
 
   invisible(list(
     file_peak_group = file_peak_group,
