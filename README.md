@@ -5,24 +5,22 @@
 
 <img src="man/figures/cacti_overview.png" width="2055" />
 
-CACTI (**C**hrom**A**tin quantitative lo**C**i of mul**TI**ple peaks)
+CACTI
 implements a powerful method for chromatin QTL mapping that leverages the correlation structure of nearby regulatory elements.
 
 
 The package offers two main modules:
     
-1.  **CACTI (Peak-window method):**
+1.  **CACTI (Peak-based method):**
+* Suitable for chromatin features with narrow peak signatures (H3k27ac, H3k4me1, ATAC-seq, etc)
+* Peak calling should be performed before applying CACTI.
+* Takes the same input as standard QTL calling tools: genotype, phenotype (called peaks) and covariates
 
-* Groups pre-defined peaks into non-overlapping windows of fixed genomic size.
-* Residualizes peak intensities with respect to covariates.
-* Runs multi-peak association tests using a principal-component omnibus (PCO) test.
-* Aggregates results and computes window-level FDR.
-
-2.  **CACTI-S (Sample-based pipeline):**
-* An end-to-end preprocessing workflow to go from raw BAM files to normalized phenotype matrices to QTL mapping.
+2.  **CACTI-S (Segment-based pipeline):**
+* Suitable for chromatin features with broad peak signatures (H3K27me3, H3K36me3, etc)
+* Skips peak calling, an end-to-end preprocessing workflow to go from raw BAM files to normalized phenotype matrices to QTL mapping.
 * Performs segmentation, read counting, QC/filtering, and normalization.
-* Runs cis-QTL mapping to generate input files for CACTI.
-
+  
 
 ------------------------------------------------------------------------
 
