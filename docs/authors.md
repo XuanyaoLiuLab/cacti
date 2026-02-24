@@ -3,6 +3,8 @@
 ## Authors
 
 - **Lili Wang**. Author, maintainer.
+- **Zining Qi**. Author.
+- **Xuanyao Liu**. Author.
 
 ## Citation
 
@@ -15,7 +17,7 @@ R package version 0.0.0.9000, https://liliw-w.github.io/cacti,
 
     @Manual{,
       title = {cacti: CACTI: Chromatin QTL Mapping with Peak Windows},
-      author = {Lili Wang},
+      author = {Lili Wang and Zining Qi and Xuanyao Liu},
       year = {2026},
       note = {R package version 0.0.0.9000, https://liliw-w.github.io/cacti},
       url = {https://github.com/liliw-w/cacti},

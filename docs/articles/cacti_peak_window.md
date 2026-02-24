@@ -37,6 +37,7 @@ Lower-level building blocks are:
 | `cacti_peak_group`     | Step 1      | Groups input peaks into non-overlapping windows.                                       |
 | `cacti_pheno_residual` | Step 2      | Residualizes the peak matrix with respect to covariates.                               |
 | `cacti_pco`            | Step 3      | Performs the Principal Component Omnibus (PCO) test on a set of peaks and variants.    |
+| `cacti_matrixqtl_cis`  | Step 4 (optional) | Runs MatrixEQTL to generate CACTI-compatible cis-QTL summary stats from genotype + phenotype + covariates. |
 | `cacti_add_fdr`        | Step 4      | Aggregates p-values from all chromosomes and calculates window-level FDR.              |
 
 ------------------------------------------------------------------------
@@ -73,6 +74,29 @@ Across all chromosomes,
 [`cacti_run_genome()`](https://liliw-w.github.io/cacti/reference/cacti_run_genome.md))
 aggregates p-values and computes **q-values** for the top hit per
 window.
+
+### Step 4 (before CACTI): Obtain cis-QTL summary statistics
+
+You can provide cis-QTL summary statistics to CACTI in two ways:
+
+1.  **Option 1 (existing workflow): QTL summary stats already available**  
+    - Use your existing per-chromosome QTL summary stats file(s) with required columns:
+      `phe_id`, `var_id`, `z`.  
+    - Pass `qtl_file` / `qtl_files` to
+      [`cacti_run_chr()`](https://liliw-w.github.io/cacti/reference/cacti_run_chr.md) /
+      [`cacti_run_genome()`](https://liliw-w.github.io/cacti/reference/cacti_run_genome.md).
+
+2.  **Option 2 (new workflow): QTL summary stats not available**  
+    - Provide genotype + phenotype + covariates, and let CACTI run MatrixEQTL first.  
+    - In
+      [`cacti_run_chr()`](https://liliw-w.github.io/cacti/reference/cacti_run_chr.md) /
+      [`cacti_run_genome()`](https://liliw-w.github.io/cacti/reference/cacti_run_genome.md),
+      set `qtl_file = NULL` / `qtl_files = NULL` and provide:
+      - `file_vcf` (or `file_geno` + `file_snp_pos`)
+      - `file_pheno`
+      - `file_cov`
+      - `file_pheno_meta`
+    - CACTI will first run `cacti_matrixqtl_cis()` and then continue with peak-window testing.
 
 ------------------------------------------------------------------------
 
@@ -240,6 +264,30 @@ head(data.table::fread(qtl_file))
 
 ------------------------------------------------------------------------
 
+### 5. Genotype input for MatrixEQTL-first workflow (optional)
+
+When QTL summary stats are not already available, you can provide genotype directly:
+
+- `file_vcf`: VCF file containing genotypes, or
+- `file_geno` + `file_snp_pos`: genotype matrix and SNP position table.
+
+In this case, call
+[`cacti_run_chr()`](https://liliw-w.github.io/cacti/reference/cacti_run_chr.md) /
+[`cacti_run_genome()`](https://liliw-w.github.io/cacti/reference/cacti_run_genome.md)
+with `qtl_file = NULL` / `qtl_files = NULL`.
+
+``` r
+file_vcf <- system.file(
+  "extdata", "test_geno.vcf",
+  package = "cacti"
+)
+
+# Example: inspect VCF header line with sample IDs
+system2("bash", c("-lc", sprintf("grep '^#CHROM' %s", shQuote(file_vcf))))
+```
+
+------------------------------------------------------------------------
+
 ## Part 3: Output files from `cacti_run_chr()`
 
 [`cacti_run_chr()`](https://liliw-w.github.io/cacti/reference/cacti_run_chr.md)
@@ -328,6 +376,8 @@ Each row corresponds to a `(group, snp)` pair:
 
 ### 1. Per-chromosome example: `cacti_run_chr()`
 
+#### Option 1: QTL summary stats already available (existing workflow)
+
 Below is an example of running the full pipeline on the **toy chr5
 data** included in `inst/extdata/`.
 
@@ -412,6 +462,56 @@ res_single_chr
 #> 
 #> $file_p_peak_group
 #> [1] "/tmp/RtmpEpmGBp/cacti_chr5_39264c2f9c6d51_pval_window50kb_chr5.txt.gz"
+```
+
+------------------------------------------------------------------------
+
+#### Option 2: QTL summary stats not available (run MatrixEQTL first)
+
+Set `qtl_file = NULL`, then provide genotype input (`file_vcf` or
+`file_geno` + `file_snp_pos`). CACTI will run MatrixEQTL first and then
+continue to the peak-window test.
+
+``` r
+library(cacti)
+
+file_pheno_meta <- system.file(
+  "extdata", "test_pheno_meta.bed",
+  package = "cacti"
+)
+
+file_pheno <- system.file(
+  "extdata", "test_pheno.txt",
+  package = "cacti"
+)
+
+file_cov <- system.file(
+  "extdata", "test_covariates.txt",
+  package = "cacti"
+)
+
+file_vcf <- system.file(
+  "extdata", "test_geno.vcf",
+  package = "cacti"
+)
+
+out_prefix <- tempfile("cacti_chr5_matrixqtl_")
+
+res_single_chr_mq <- cacti_run_chr(
+  window_size     = "50kb",
+  file_pheno_meta = file_pheno_meta,
+  file_pheno      = file_pheno,
+  file_cov        = file_cov,
+  chr             = "chr5",
+  qtl_file        = NULL,      # trigger MatrixEQTL step first
+  file_vcf        = file_vcf,  # or use file_geno + file_snp_pos
+  cis_dist        = 100000,    # 100 kb cis window
+  p_threshold     = 1.0,       # include all cis summary stats
+  out_prefix      = out_prefix,
+  min_peaks       = 2
+)
+
+res_single_chr_mq
 ```
 
 ------------------------------------------------------------------------
@@ -533,6 +633,12 @@ res_genome
 #> $file_fdr_out
 #> [1] "/tmp/RtmpEpmGBp/cacti_fdr_chr5.txt.gz"
 ```
+
+When QTL summary stats are not precomputed, you can use the same pattern
+with `qtl_files = NULL` and genotype input (`file_vcf` or `file_geno` +
+`file_snp_pos`);
+[`cacti_run_genome()`](https://liliw-w.github.io/cacti/reference/cacti_run_genome.md)
+will run MatrixEQTL first, then run CACTI.
 
 ------------------------------------------------------------------------
 

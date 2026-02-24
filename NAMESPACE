@@ -3,6 +3,7 @@
 export(cacti_add_fdr)
 export(cacti_cal_p)
 export(cacti_group_peak_window)
+export(cacti_matrixqtl_cis)
 export(cacti_pheno_cov_residual)
 export(cacti_run_chr)
 export(cacti_run_genome)

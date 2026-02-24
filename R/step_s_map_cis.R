@@ -65,6 +65,7 @@ cacti_s_map_cis <- function(
 
   # --- 2. Handle Genotypes (VCF or Text) ---
   clean_geno <- FALSE; clean_pos <- FALSE
+  common_samples <- target_samples
   if (!is.null(file_vcf)) {
     if (file_vcf == "" || !file.exists(file_vcf)) stop("VCF file not found: ", file_vcf)
     if (!requireNamespace("VariantAnnotation", quietly = TRUE)) stop("VariantAnnotation required.")
@@ -119,6 +120,31 @@ cacti_s_map_cis <- function(
     }
   } else {
     if (is.null(file_geno)) stop("Must provide file_vcf or file_geno.")
+    if (is.null(file_snp_pos)) stop("When `file_vcf` is NULL, must provide `file_snp_pos`.")
+    if (!file.exists(file_geno)) stop("Genotype file not found: ", file_geno)
+    if (!file.exists(file_snp_pos)) stop("SNP position file not found: ", file_snp_pos)
+
+    message("Preparing genotype matrix...")
+    geno_dt <- data.table::fread(file_geno, header = TRUE)
+    geno_id_col <- names(geno_dt)[1]
+    geno_samples <- names(geno_dt)[-1]
+
+    common_samples <- intersect(target_samples, geno_samples)
+    if (length(common_samples) == 0) {
+      stop("No overlapping samples between phenotype and genotype matrix.")
+    }
+
+    file_geno_clean <- tempfile(fileext = ".txt")
+    clean_geno <- TRUE
+    geno_subset <- geno_dt[, c(geno_id_col, common_samples), with = FALSE]
+    data.table::fwrite(geno_subset, file_geno_clean, sep = "\t", quote = FALSE)
+    file_geno <- file_geno_clean
+
+    if (length(common_samples) < length(target_samples)) {
+      warning("Subsetting phenotype to ", length(common_samples), " common samples.")
+      dt_pheno_sub <- dt_pheno[, c("GeneID", common_samples), with = FALSE]
+      data.table::fwrite(dt_pheno_sub, file_pheno_clean, sep = "\t", quote = FALSE)
+    }
   }
 
 
@@ -209,6 +235,7 @@ cacti_s_map_cis <- function(
   unlink(tmp_out); unlink(file_pheno_clean)
   if (clean_geno) unlink(file_geno)
   if (clean_pos) unlink(file_snp_pos)
+  if (!is.null(file_cov_clean) && file.exists(file_cov_clean)) unlink(file_cov_clean)
 
   message("Success! Stats written to: ", file_qtl_out)
 

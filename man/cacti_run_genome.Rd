@@ -10,7 +10,12 @@ cacti_run_genome(
   file_pheno,
   file_cov,
   chrs,
-  qtl_files,
+  qtl_files = NULL,
+  file_vcf = NULL,
+  file_geno = NULL,
+  file_snp_pos = NULL,
+  cis_dist = 1e+05,
+  p_threshold = 1,
   out_prefix,
   dir_pco = system.file("pco", package = "cacti"),
   min_peaks = 2,
@@ -43,7 +48,19 @@ file path for each chromosome in order; or
 \item a single template string containing the placeholder \code{"{chr}"},
 e.g., \code{"extdata/test_qtl_sum_stats_{chr}.txt.gz"}. In that case,
 the placeholder is replaced by each element of \code{chrs}.
-}}
+}
+If \code{NULL}, MatrixEQTL is run once first from genotype + phenotype +
+covariates to generate a CACTI-compatible cis-QTL file used for all \code{chrs}.}
+
+\item{file_vcf}{Optional path to input VCF file for MatrixEQTL preprocessing.}
+
+\item{file_geno}{Optional path to genotype matrix if no VCF is provided.}
+
+\item{file_snp_pos}{Optional path to SNP-position file if no VCF is provided.}
+
+\item{cis_dist}{Cis-window distance for MatrixEQTL (default 100000 bp).}
+
+\item{p_threshold}{P-value threshold for MatrixEQTL output (default 1.0).}
 
 \item{out_prefix}{Output prefix used to construct all output filenames.}
 
