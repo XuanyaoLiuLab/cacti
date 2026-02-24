@@ -11,10 +11,11 @@ implements a powerful method for chromatin QTL mapping that leverages the correl
 
 The package offers two main modules:
     
-1.  **CACTI (Peak-based method):**
+1.  **CACTI (Peak-based pipeline):**
 * Suitable for chromatin features with narrow peak signatures (H3k27ac, H3k4me1, ATAC-seq, etc)
 * Peak calling should be performed before applying CACTI.
-* Takes the same input as standard QTL calling tools: genotype, phenotype (called peaks) and covariates
+* Takes standard input in standard QTL calling tools: genotype, phenotype (called peaks) and covariates
+* A summary statistics-based option is available too
 
 2.  **CACTI-S (Segment-based pipeline):**
 * Suitable for chromatin features with broad peak signatures (H3K27me3, H3K36me3, etc)
