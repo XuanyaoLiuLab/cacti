@@ -26,7 +26,8 @@
 #' @param p_threshold P-value threshold for MatrixEQTL output (default 1.0).
 #' @param out_prefix Output prefix used to construct all output filenames.
 #' @param dir_pco Directory containing association test helpers: ModifiedPCOMerged_acat.R, liu.R, liumod.R, davies.R, qfc.so.
-#' @param min_peaks Minimum number of peaks required in a window to run the multivariate PCO test (>= min_peaks -> PCO; < min_peaks -> univariate p).
+#' @param min_peaks Minimum number of peaks required for a window to be included in testing.
+#' Included windows with 1 peak use univariate p-values; included windows with >=2 peaks use PCO.
 #'
 #' @return Invisibly returns a named list of output paths with elements:
 #'   \describe{
@@ -66,7 +67,7 @@
 #'   qtl_file = system.file("extdata", "test_qtl_sum_stats_chr5.txt.gz", package = "cacti"),
 #'   out_prefix = out_prefix,
 #'   dir_pco = system.file("pco", package = "cacti"),
-#'   min_peaks = 2
+#'   min_peaks = 1
 #' )
 #' }
 #'
@@ -85,7 +86,7 @@ cacti_run_chr <- function(
     p_threshold = 1.0,
     out_prefix,
     dir_pco = system.file("pco", package = "cacti"),
-    min_peaks = 2
+    min_peaks = 1
 ) {
   if (!requireNamespace("data.table", quietly = TRUE)) stop("data.table required.")
   if (!requireNamespace("dplyr", quietly = TRUE)) stop("dplyr required.")

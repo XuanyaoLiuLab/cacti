@@ -18,7 +18,7 @@ cacti_run_genome(
   p_threshold = 1,
   out_prefix,
   dir_pco = system.file("pco", package = "cacti"),
-  min_peaks = 2,
+  min_peaks = 1,
   file_fdr_out = NULL
 )
 }
@@ -66,7 +66,8 @@ covariates to generate a CACTI-compatible cis-QTL file used for all \code{chrs}.
 
 \item{dir_pco}{Directory containing association test helpers: ModifiedPCOMerged_acat.R, liu.R, liumod.R, davies.R, qfc.so.}
 
-\item{min_peaks}{Minimum number of peaks required in a window to run the multivariate PCO test (>= min_peaks -> PCO; < min_peaks -> univariate p).}
+\item{min_peaks}{Minimum number of peaks required for a window to be included in testing.
+Included windows with 1 peak use univariate p-values; included windows with >=2 peaks use PCO.}
 
 \item{file_fdr_out}{Optional output path for the FDR-added window-level file.
 If \code{NULL}, a default filename is constructed from \code{out_prefix} and \code{window_size}.}
@@ -127,7 +128,7 @@ res <- cacti_run_genome(
   qtl_files = qtl_file,
   out_prefix = out_prefix,
   dir_pco = system.file("pco", package = "cacti"),
-  min_peaks = 2,
+  min_peaks = 1,
   file_fdr_out = file.path(tempdir(), "cacti_fdr_chr5.txt.gz")
 )
 }

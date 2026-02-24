@@ -11,7 +11,7 @@ cacti_cal_p(
   file_pheno_cov_residual,
   file_p_peak_group,
   dir_pco = system.file("pco", package = "cacti"),
-  min_peaks = 2
+  min_peaks = 1
 )
 }
 \arguments{
@@ -29,7 +29,8 @@ Columns: group, snp, pval.}
 
 \item{dir_pco}{Directory containing association test helpers: ModifiedPCOMerged_acat.R, liu.R, liumod.R, davies.R, qfc.so.}
 
-\item{min_peaks}{Minimum number of peaks required in a group to run the multivariate PCO test (>= min_peaks -> PCO; < min_peaks -> univariate p).}
+\item{min_peaks}{Minimum number of peaks required for a window to be included in testing.
+Included windows with 1 peak use univariate p-values; included windows with >=2 peaks use PCO.}
 }
 \value{
 Invisibly returns the pvalue tibble; writes \code{file_p_peak_group}.

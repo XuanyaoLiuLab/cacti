@@ -26,6 +26,7 @@ navbar:
 reference:
   - title: "CACTI peak-window cQTL mapping pipeline"
     contents:
+      - cacti_peak_window
       - cacti_run_chr
       - cacti_run_genome
 
@@ -51,4 +52,3 @@ articles:
     contents:
       - cacti_peak_window
       - cacti_s_prep
-

@@ -8,7 +8,8 @@
 #' @param file_p_peak_group Output path for per-window pvalues.
 #' Columns: group, snp, pval.
 #' @param dir_pco Directory containing association test helpers: ModifiedPCOMerged_acat.R, liu.R, liumod.R, davies.R, qfc.so.
-#' @param min_peaks Minimum number of peaks required in a group to run the multivariate PCO test (>= min_peaks -> PCO; < min_peaks -> univariate p).
+#' @param min_peaks Minimum number of peaks required for a window to be included in testing.
+#' Included windows with 1 peak use univariate p-values; included windows with >=2 peaks use PCO.
 #' @return Invisibly returns the pvalue tibble; writes `file_p_peak_group`.
 #' @export
 cacti_cal_p <- function(
@@ -16,7 +17,7 @@ cacti_cal_p <- function(
     file_peak_group, file_pheno_cov_residual,
     file_p_peak_group,
     dir_pco = system.file("pco", package = "cacti"),
-    min_peaks = 2
+    min_peaks = 1
     ) {
   suppressPackageStartupMessages(requireNamespace("data.table"))
   suppressPackageStartupMessages(requireNamespace("dplyr"))
@@ -48,7 +49,10 @@ cacti_cal_p <- function(
 
 
   ## -- Build peak group indices --
-  df_peak_group <- dplyr::filter(peak_group, n_pid_group >= !!min_peaks) |>
+  df_peak_group_all <- dplyr::filter(peak_group, n_pid_group >= !!min_peaks)
+
+  # PCO path: any included window with >=2 peaks
+  df_peak_group <- dplyr::filter(df_peak_group_all, n_pid_group >= 2) |>
     dplyr::select(group, group_chr, n_pid_group, pid_group) |>
     tidyr::separate_rows(pid_group, sep = ";") |>
     dplyr::arrange(group_chr, n_pid_group)
@@ -59,7 +63,7 @@ cacti_cal_p <- function(
 
 
   ## -- Single-peak groups processed with univariate p-values --
-  df_peak_group_single <- dplyr::filter(peak_group, n_pid_group < !!min_peaks) |>
+  df_peak_group_single <- dplyr::filter(df_peak_group_all, n_pid_group == 1) |>
     dplyr::select(group, group_chr, n_pid_group, pid_group) |>
     tidyr::separate_rows(pid_group, sep = ";") |>
     dplyr::arrange(group_chr, n_pid_group)
@@ -89,7 +93,7 @@ cacti_cal_p <- function(
       tibble::column_to_rownames(var = "var_id") |>
       as.matrix()
 
-    if (nrow(z_mat) == 0 || ncol(z_mat) < min_peaks) {
+    if (nrow(z_mat) == 0 || ncol(z_mat) < 2) {
       p_peak_group_list[[group]] <- NULL
       next
     }

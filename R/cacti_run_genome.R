@@ -63,7 +63,7 @@
 #'   qtl_files = system.file("extdata", "test_qtl_sum_stats_chr5.txt.gz", package = "cacti"),
 #'   out_prefix = out_prefix,
 #'   dir_pco = system.file("pco", package = "cacti"),
-#'   min_peaks = 2,
+#'   min_peaks = 1,
 #'   file_fdr_out = file.path(tempdir(), "cacti_fdr_chr5.txt.gz")
 #' )
 #' }
@@ -83,7 +83,7 @@ cacti_run_genome <- function(
     p_threshold = 1.0,
     out_prefix,
     dir_pco = system.file("pco", package = "cacti"),
-    min_peaks = 2,
+    min_peaks = 1,
     file_fdr_out   = NULL
 ) {
   if (!requireNamespace("data.table", quietly = TRUE)) stop("data.table required.")
