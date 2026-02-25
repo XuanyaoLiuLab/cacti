@@ -16,11 +16,18 @@
 #' @param file_cov Path to covariate matrix.
 #' Rows = covariates; first column = covariate ID; remaining columns = samples.
 #' @param chr Chromosome label to process (e.g., "chr1", "chr21").
-#' @param qtl_file Path to cis QTL summary stats file for this chromosome.
-#' Must contain columns: phe_id, var_id, z.
+#' @param qtl_file Optional path to cis QTL summary stats file for this chromosome.
+#' Must contain columns: phe_id, var_id, z. If `NULL`, MatrixEQTL is run first
+#' from genotype + phenotype + covariates to generate this file.
+#' @param file_vcf Optional path to input VCF file for MatrixEQTL preprocessing.
+#' @param file_geno Optional path to genotype matrix if no VCF is provided.
+#' @param file_snp_pos Optional path to SNP-position file if no VCF is provided.
+#' @param cis_dist Cis-window distance for MatrixEQTL (default 100000 bp).
+#' @param p_threshold P-value threshold for MatrixEQTL output (default 1.0).
 #' @param out_prefix Output prefix used to construct all output filenames.
 #' @param dir_pco Directory containing association test helpers: ModifiedPCOMerged_acat.R, liu.R, liumod.R, davies.R, qfc.so.
-#' @param min_peaks Minimum number of peaks required in a window to run the multivariate PCO test (>= min_peaks -> PCO; < min_peaks -> univariate p).
+#' @param min_peaks Minimum number of peaks required for a window to be included in testing.
+#' Included windows with 1 peak use univariate p-values; included windows with >=2 peaks use PCO.
 #'
 #' @return Invisibly returns a named list of output paths with elements:
 #'   \describe{
@@ -49,11 +56,6 @@
 #'   package = "cacti"
 #' )
 #'
-#' qtl_file <- system.file(
-#'   "extdata", "test_qtl_sum_stats_chr5.txt.gz",
-#'   package = "cacti"
-#' )
-#'
 #' out_prefix <- tempfile("cacti_chr5_")
 #'
 #' res <- cacti_run_chr(
@@ -62,10 +64,10 @@
 #'   file_pheno = file_pheno,
 #'   file_cov = file_cov,
 #'   chr = "chr5",
-#'   qtl_file = qtl_file,
+#'   qtl_file = system.file("extdata", "test_qtl_sum_stats_chr5.txt.gz", package = "cacti"),
 #'   out_prefix = out_prefix,
 #'   dir_pco = system.file("pco", package = "cacti"),
-#'   min_peaks = 2
+#'   min_peaks = 1
 #' )
 #' }
 #'
@@ -76,10 +78,15 @@ cacti_run_chr <- function(
     file_pheno,
     file_cov,
     chr,
-    qtl_file,
+    qtl_file = NULL,
+    file_vcf = NULL,
+    file_geno = NULL,
+    file_snp_pos = NULL,
+    cis_dist = 100000,
+    p_threshold = 1.0,
     out_prefix,
     dir_pco = system.file("pco", package = "cacti"),
-    min_peaks = 2
+    min_peaks = 1
 ) {
   if (!requireNamespace("data.table", quietly = TRUE)) stop("data.table required.")
   if (!requireNamespace("dplyr", quietly = TRUE)) stop("dplyr required.")
@@ -99,6 +106,26 @@ cacti_run_chr <- function(
   file_peak_group_peaklevel  <- paste0(out_prefix, "_peak_group_window", tag_window, "_peak_as_row.txt")
   file_pheno_cov_residual  <- paste0(out_prefix, "_pheno_cov_residual.txt")
   file_p_peak_group <- file.path(out_dir, paste0(basename(out_prefix), "_pval_window", tag_window, "_", chr, ".txt.gz"))
+  matrixqtl_out <- file.path(out_dir, paste0(basename(out_prefix), "_matrixqtl_cis_", chr, ".txt.gz"))
+
+  if (is.null(qtl_file)) {
+    if (is.null(file_vcf) && is.null(file_geno)) {
+      stop("Provide `qtl_file`, or provide genotype input via `file_vcf` or `file_geno`.")
+    }
+    message("\n[Step 0/3] Run MatrixEQTL to generate cis QTL summary stats …")
+    cacti_matrixqtl_cis(
+      file_pheno = file_pheno,
+      file_pheno_meta = file_pheno_meta,
+      file_cov = file_cov,
+      file_qtl_out = matrixqtl_out,
+      file_vcf = file_vcf,
+      file_geno = file_geno,
+      file_snp_pos = file_snp_pos,
+      cis_dist = cis_dist,
+      p_threshold = p_threshold
+    )
+    qtl_file <- matrixqtl_out
+  }
 
   message("\n[Step 1/3] Group peaks into non-overlapping windows …")
   cacti_group_peak_window(

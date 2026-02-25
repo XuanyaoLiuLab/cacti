@@ -10,10 +10,15 @@ cacti_run_chr(
   file_pheno,
   file_cov,
   chr,
-  qtl_file,
+  qtl_file = NULL,
+  file_vcf = NULL,
+  file_geno = NULL,
+  file_snp_pos = NULL,
+  cis_dist = 1e+05,
+  p_threshold = 1,
   out_prefix,
   dir_pco = system.file("pco", package = "cacti"),
-  min_peaks = 2
+  min_peaks = 1
 )
 }
 \arguments{
@@ -35,14 +40,26 @@ Rows = covariates; first column = covariate ID; remaining columns = samples.}
 
 \item{chr}{Chromosome label to process (e.g., "chr1", "chr21").}
 
-\item{qtl_file}{Path to cis QTL summary stats file for this chromosome.
-Must contain columns: phe_id, var_id, z.}
+\item{qtl_file}{Optional path to cis QTL summary stats file for this chromosome.
+Must contain columns: phe_id, var_id, z. If \code{NULL}, MatrixEQTL is run first
+from genotype + phenotype + covariates to generate this file.}
+
+\item{file_vcf}{Optional path to input VCF file for MatrixEQTL preprocessing.}
+
+\item{file_geno}{Optional path to genotype matrix if no VCF is provided.}
+
+\item{file_snp_pos}{Optional path to SNP-position file if no VCF is provided.}
+
+\item{cis_dist}{Cis-window distance for MatrixEQTL (default 100000 bp).}
+
+\item{p_threshold}{P-value threshold for MatrixEQTL output (default 1.0).}
 
 \item{out_prefix}{Output prefix used to construct all output filenames.}
 
 \item{dir_pco}{Directory containing association test helpers: ModifiedPCOMerged_acat.R, liu.R, liumod.R, davies.R, qfc.so.}
 
-\item{min_peaks}{Minimum number of peaks required in a window to run the multivariate PCO test (>= min_peaks -> PCO; < min_peaks -> univariate p).}
+\item{min_peaks}{Minimum number of peaks required for a window to be included in testing.
+Included windows with 1 peak use univariate p-values; included windows with >=2 peaks use PCO.}
 }
 \value{
 Invisibly returns a named list of output paths with elements:
@@ -96,7 +113,7 @@ res <- cacti_run_chr(
   qtl_file = qtl_file,
   out_prefix = out_prefix,
   dir_pco = system.file("pco", package = "cacti"),
-  min_peaks = 2
+  min_peaks = 1
 )
 }
 

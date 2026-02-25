@@ -2,7 +2,11 @@ Package: cacti
 Title: CACTI: Chromatin QTL Mapping with Peak Windows
 Version: 0.0.0.9000
 Authors@R: 
-    person("Lili", "Wang", , "liliw1@uchicago.edu", role = c("aut", "cre"))
+    c(
+      person("Lili", "Wang", , "liliw1@uchicago.edu", role = c("aut", "cre")),
+      person("Zining", "Qi", role = "aut"),
+      person("Xuanyao", "Liu", role = "aut")
+    )
 Description: Implements the CACTI peak-window method for multi-peak
     chromatin QTL mapping.
 URL: https://github.com/liliw-w/cacti, https://liliw-w.github.io/cacti
@@ -31,5 +35,6 @@ Suggests:
     GenomeInfoDb,
     BiocGenerics,
     edgeR,
-    MatrixEQTL
+    MatrixEQTL,
+    CompQuadForm
 VignetteBuilder: knitr

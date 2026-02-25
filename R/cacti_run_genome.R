@@ -1,13 +1,13 @@
-#' Run CACTI peak-window pipeline genome-wide and add FDR
+#' Run CACTI peak-window pipeline genome-wide
 #'
 #' This function is a convenience wrapper that runs the CACTI peak-window pipeline
-#' across multiple chromosomes and then computes window-level FDR across all
+#' across multiple chromosomes and optionally computes window-level FDR across all
 #' peak windows and chromosomes.
 #'
-#' For each chromosome in `chrs`, it calls [cacti_run_chr()] and
-#' collects the per-window p-value files. It then calls [cacti_add_fdr()]
-#' once, aggregating all chromosomes to obtain q-values for the top-hit p-values
-#' in each window.
+#' For each chromosome in `chrs`, it runs per-window p-value calculation and
+#' collects per-chromosome p-value files. If `do_fdr = TRUE`, it then calls
+#' [cacti_add_fdr()] once, aggregating all chromosomes to obtain q-values for
+#' the top-hit p-values in each window.
 #'
 #' @inheritParams cacti_run_chr
 #' @param chrs Character vector of chromosome labels (e.g., `paste0("chr", 1:22)`).
@@ -19,8 +19,12 @@
 #'           e.g., `"extdata/test_qtl_sum_stats_{chr}.txt.gz"`. In that case,
 #'           the placeholder is replaced by each element of `chrs`.
 #'   }
+#'   If `NULL`, MatrixEQTL is run once first from genotype + phenotype +
+#'   covariates to generate a CACTI-compatible cis-QTL file used for all `chrs`.
 #' @param file_fdr_out Optional output path for the FDR-added window-level file.
 #'   If `NULL`, a default filename is constructed from `out_prefix` and `window_size`.
+#' @param do_fdr Logical; if `TRUE` (default), run [cacti_add_fdr()] across
+#'   all chromosomes. If `FALSE`, skip FDR correction.
 #'
 #' @return Invisibly returns a named list of output paths with elements:
 #'   \describe{
@@ -28,7 +32,7 @@
 #'     \item{file_peak_group_peaklevel}{Path to the peak-level group.}
 #'     \item{file_pheno_residual}{Path to the residualized phenotype matrix.}
 #'     \item{file_p_peak_group}{Path to the per-window p-value file for all chromosome.}
-#'     \item{file_fdr_out}{Path to the FDR-added window-level result file.}
+#'     \item{file_fdr_out}{Path to the FDR-added window-level result file (`NULL` when `do_fdr = FALSE`).}
 #'   }
 #'
 #' @examples
@@ -50,11 +54,6 @@
 #'   package = "cacti"
 #' )
 #'
-#' qtl_file <- system.file(
-#'   "extdata", "test_qtl_sum_stats_chr5.txt.gz",
-#'   package = "cacti"
-#' )
-#'
 #' out_prefix <- tempfile("cacti_genome_")
 #'
 #' res <- cacti_run_genome(
@@ -63,10 +62,10 @@
 #'   file_pheno = file_pheno,
 #'   file_cov = file_cov,
 #'   chrs = "chr5",
-#'   qtl_files = qtl_file,
+#'   qtl_files = system.file("extdata", "test_qtl_sum_stats_chr5.txt.gz", package = "cacti"),
 #'   out_prefix = out_prefix,
 #'   dir_pco = system.file("pco", package = "cacti"),
-#'   min_peaks = 2,
+#'   min_peaks = 1,
 #'   file_fdr_out = file.path(tempdir(), "cacti_fdr_chr5.txt.gz")
 #' )
 #' }
@@ -78,27 +77,20 @@ cacti_run_genome <- function(
     file_pheno,
     file_cov,
     chrs,
-    qtl_files,
+    qtl_files = NULL,
+    file_vcf = NULL,
+    file_geno = NULL,
+    file_snp_pos = NULL,
+    cis_dist = 100000,
+    p_threshold = 1.0,
     out_prefix,
     dir_pco = system.file("pco", package = "cacti"),
-    min_peaks = 2,
-    file_fdr_out   = NULL
+    min_peaks = 1,
+    file_fdr_out   = NULL,
+    do_fdr = TRUE
 ) {
   if (!requireNamespace("data.table", quietly = TRUE)) stop("data.table required.")
   if (!requireNamespace("dplyr", quietly = TRUE)) stop("dplyr required.")
-
-  # resolve qtl_files
-  if (length(qtl_files) == 1L && grepl("\\{chr\\}", qtl_files)) {
-    qtl_files <- vapply(
-      chrs,
-      function(cc) gsub("\\{chr\\}", cc, qtl_files),
-      FUN.VALUE = character(1L)
-    )
-  }
-  if (length(qtl_files) != length(chrs)) {
-    stop("`qtl_files` must be either length 1 with '{chr}' placeholder, ",
-         "or the same length as `chrs`.")
-  }
 
   # setup paths
   out_dir <- dirname(out_prefix)
@@ -117,6 +109,39 @@ cacti_run_genome <- function(
   file_peak_group  <- paste0(out_prefix, "_peak_group_window", tag_window, ".txt")
   file_peak_group_peaklevel  <- paste0(out_prefix, "_peak_group_window", tag_window, "_peak_as_row.txt")
   file_pheno_cov_residual  <- paste0(out_prefix, "_pheno_cov_residual.txt")
+  matrixqtl_out <- file.path(out_dir, paste0(basename(out_prefix), "_matrixqtl_cis_all_chrs.txt.gz"))
+
+  # resolve qtl_files
+  if (is.null(qtl_files)) {
+    if (is.null(file_vcf) && is.null(file_geno)) {
+      stop("Provide `qtl_files`, or provide genotype input via `file_vcf` or `file_geno`.")
+    }
+    message("\n[Step 0/3] Run MatrixEQTL once to generate cis QTL summary stats …")
+    cacti_matrixqtl_cis(
+      file_pheno = file_pheno,
+      file_pheno_meta = file_pheno_meta,
+      file_cov = file_cov,
+      file_qtl_out = matrixqtl_out,
+      file_vcf = file_vcf,
+      file_geno = file_geno,
+      file_snp_pos = file_snp_pos,
+      cis_dist = cis_dist,
+      p_threshold = p_threshold
+    )
+    qtl_files <- rep(matrixqtl_out, length(chrs))
+  } else if (length(qtl_files) == 1L && grepl("\\{chr\\}", qtl_files)) {
+    qtl_files <- vapply(
+      chrs,
+      function(cc) gsub("\\{chr\\}", cc, qtl_files),
+      FUN.VALUE = character(1L)
+    )
+  } else if (length(qtl_files) == 1L) {
+    qtl_files <- rep(qtl_files, length(chrs))
+  }
+  if (length(qtl_files) != length(chrs)) {
+    stop("`qtl_files` must be NULL, length 1, length 1 with '{chr}' placeholder, ",
+         "or the same length as `chrs`.")
+  }
 
 
   message("\n[Step 1/3] Group peaks into non-overlapping windows …")
@@ -172,30 +197,40 @@ cacti_run_genome <- function(
 
   }
 
-  if (is.null(file_fdr_out)) {
-    tag_window <- gsub("\\s+", "", as.character(window_size))
-    file_fdr_out <- file.path(
-      dirname(out_prefix),
-      paste0(basename(out_prefix), "_pval_window", tag_window, "_fdr_added.txt.gz")
+  if (isTRUE(do_fdr)) {
+    if (is.null(file_fdr_out)) {
+      tag_window <- gsub("\\s+", "", as.character(window_size))
+      file_fdr_out <- file.path(
+        dirname(out_prefix),
+        paste0(basename(out_prefix), "_pval_window", tag_window, "_fdr_added.txt.gz")
+      )
+    }
+
+    message("--------------------------------------------------------")
+    message("\n=== [II/III] Adding FDR across windows and chromosomes ===")
+    message("--------------------------------------------------------")
+    cacti_add_fdr(
+      file_all_pval = pval_files,
+      file_fdr_out = file_fdr_out
     )
+
+    message("--------------------------------------------------------")
+    message("\n=== [III/III] Genome-wide CACTI peak-window pipeline completed with FDR! ===\n")
+    message("--------------------------------------------------------")
+  } else {
+    file_fdr_out <- NULL
+    message("--------------------------------------------------------")
+    message("\n=== [II/II] Genome-wide CACTI peak-window pipeline completed (FDR skipped) ===\n")
+    message("--------------------------------------------------------")
   }
-
-  message("--------------------------------------------------------")
-  message("\n=== [II/III] Adding FDR across windows and chromosomes ===")
-  message("--------------------------------------------------------")
-  cacti_add_fdr(
-    file_all_pval = pval_files,
-    file_fdr_out = file_fdr_out
-  )
-
-
-  message("--------------------------------------------------------")
-  message("\n=== [III/III] Genome-wide CACTI peak-window pipeline completed with FDR! ===\n")
-  message("--------------------------------------------------------")
 
   message("----------- Run summary -----------")
   message("  [1] Pvalue output: ", paste(pval_files, collapse = ";"))
-  message("  [2] FDR output: ", file_fdr_out)
+  if (isTRUE(do_fdr)) {
+    message("  [2] FDR output: ", file_fdr_out)
+  } else {
+    message("  [2] FDR output: skipped (`do_fdr = FALSE`)")
+  }
 
   invisible(list(
     file_peak_group = file_peak_group,

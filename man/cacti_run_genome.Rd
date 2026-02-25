@@ -2,7 +2,7 @@
 % Please edit documentation in R/cacti_run_genome.R
 \name{cacti_run_genome}
 \alias{cacti_run_genome}
-\title{Run CACTI peak-window pipeline genome-wide and add FDR}
+\title{Run CACTI peak-window pipeline genome-wide}
 \usage{
 cacti_run_genome(
   window_size,
@@ -10,11 +10,17 @@ cacti_run_genome(
   file_pheno,
   file_cov,
   chrs,
-  qtl_files,
+  qtl_files = NULL,
+  file_vcf = NULL,
+  file_geno = NULL,
+  file_snp_pos = NULL,
+  cis_dist = 1e+05,
+  p_threshold = 1,
   out_prefix,
   dir_pco = system.file("pco", package = "cacti"),
-  min_peaks = 2,
-  file_fdr_out = NULL
+  min_peaks = 1,
+  file_fdr_out = NULL,
+  do_fdr = TRUE
 )
 }
 \arguments{
@@ -43,16 +49,32 @@ file path for each chromosome in order; or
 \item a single template string containing the placeholder \code{"{chr}"},
 e.g., \code{"extdata/test_qtl_sum_stats_{chr}.txt.gz"}. In that case,
 the placeholder is replaced by each element of \code{chrs}.
-}}
+}
+If \code{NULL}, MatrixEQTL is run once first from genotype + phenotype +
+covariates to generate a CACTI-compatible cis-QTL file used for all \code{chrs}.}
+
+\item{file_vcf}{Optional path to input VCF file for MatrixEQTL preprocessing.}
+
+\item{file_geno}{Optional path to genotype matrix if no VCF is provided.}
+
+\item{file_snp_pos}{Optional path to SNP-position file if no VCF is provided.}
+
+\item{cis_dist}{Cis-window distance for MatrixEQTL (default 100000 bp).}
+
+\item{p_threshold}{P-value threshold for MatrixEQTL output (default 1.0).}
 
 \item{out_prefix}{Output prefix used to construct all output filenames.}
 
 \item{dir_pco}{Directory containing association test helpers: ModifiedPCOMerged_acat.R, liu.R, liumod.R, davies.R, qfc.so.}
 
-\item{min_peaks}{Minimum number of peaks required in a window to run the multivariate PCO test (>= min_peaks -> PCO; < min_peaks -> univariate p).}
+\item{min_peaks}{Minimum number of peaks required for a window to be included in testing.
+Included windows with 1 peak use univariate p-values; included windows with >=2 peaks use PCO.}
 
 \item{file_fdr_out}{Optional output path for the FDR-added window-level file.
 If \code{NULL}, a default filename is constructed from \code{out_prefix} and \code{window_size}.}
+
+\item{do_fdr}{Logical; if \code{TRUE} (default), run \code{\link[=cacti_add_fdr]{cacti_add_fdr()}} across
+all chromosomes. If \code{FALSE}, skip FDR correction.}
 }
 \value{
 Invisibly returns a named list of output paths with elements:
@@ -61,19 +83,19 @@ Invisibly returns a named list of output paths with elements:
 \item{file_peak_group_peaklevel}{Path to the peak-level group.}
 \item{file_pheno_residual}{Path to the residualized phenotype matrix.}
 \item{file_p_peak_group}{Path to the per-window p-value file for all chromosome.}
-\item{file_fdr_out}{Path to the FDR-added window-level result file.}
+\item{file_fdr_out}{Path to the FDR-added window-level result file (\code{NULL} when \code{do_fdr = FALSE}).}
 }
 }
 \description{
 This function is a convenience wrapper that runs the CACTI peak-window pipeline
-across multiple chromosomes and then computes window-level FDR across all
+across multiple chromosomes and optionally computes window-level FDR across all
 peak windows and chromosomes.
 }
 \details{
-For each chromosome in \code{chrs}, it calls \code{\link[=cacti_run_chr]{cacti_run_chr()}} and
-collects the per-window p-value files. It then calls \code{\link[=cacti_add_fdr]{cacti_add_fdr()}}
-once, aggregating all chromosomes to obtain q-values for the top-hit p-values
-in each window.
+For each chromosome in \code{chrs}, it runs per-window p-value calculation and
+collects per-chromosome p-value files. If \code{do_fdr = TRUE}, it then calls
+\code{\link[=cacti_add_fdr]{cacti_add_fdr()}} once, aggregating all chromosomes to obtain q-values for
+the top-hit p-values in each window.
 }
 \examples{
 \dontrun{
@@ -110,7 +132,7 @@ res <- cacti_run_genome(
   qtl_files = qtl_file,
   out_prefix = out_prefix,
   dir_pco = system.file("pco", package = "cacti"),
-  min_peaks = 2,
+  min_peaks = 1,
   file_fdr_out = file.path(tempdir(), "cacti_fdr_chr5.txt.gz")
 )
 }

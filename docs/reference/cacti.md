@@ -49,3 +49,5 @@ package vignette:
 ## Author
 
 **Maintainer**: Lili Wang <liliw1@uchicago.edu>
+
+**Contributors**: Lili Wang, Zining Qi, Xuanyao Liu
