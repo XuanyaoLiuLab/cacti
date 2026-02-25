@@ -35,5 +35,6 @@ Suggests:
     GenomeInfoDb,
     BiocGenerics,
     edgeR,
-    MatrixEQTL
+    MatrixEQTL,
+    CompQuadForm
 VignetteBuilder: knitr

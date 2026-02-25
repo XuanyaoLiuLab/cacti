@@ -76,10 +76,10 @@ CACTI-specific phenotype metadata columns (`phe_id`, `phe_chr`, `phe_from`,
 ```{r show-required-inputs, message=FALSE}
 library(cacti)
 
-file_pheno_meta <- system.file("extdata", "test_pheno_meta.bed", package = "cacti")
-file_pheno <- system.file("extdata", "test_pheno.txt", package = "cacti")
-file_cov <- system.file("extdata", "test_covariates.txt", package = "cacti")
-file_vcf <- system.file("extdata", "test_geno.vcf", package = "cacti")
+file_pheno_meta <- system.file("extdata", "test_cacti_peak_chr5_pheno_meta.bed", package = "cacti")
+file_pheno <- system.file("extdata", "test_cacti_peak_chr5_pheno.txt", package = "cacti")
+file_cov <- system.file("extdata", "test_cacti_peak_chr5_covariates.txt", package = "cacti")
+file_vcf <- system.file("extdata", "test_cacti_peak_chr5_geno.vcf", package = "cacti")
 
 head(data.table::fread(file_pheno_meta))
 head(data.table::fread(file_pheno))[, 1:5]
@@ -95,7 +95,7 @@ If you already have cis-QTL summary stats, you can provide:
   - `z`
 
 ```{r show-optional-qtl, message=FALSE}
-qtl_file <- system.file("extdata", "test_qtl_sum_stats_chr5.txt.gz", package = "cacti")
+qtl_file <- system.file("extdata", "test_cacti_peak_chr5_matrixqtl_sumstats.txt.gz", package = "cacti")
 head(data.table::fread(qtl_file))
 ```
 
@@ -238,10 +238,10 @@ For detailed low-level APIs, see:
 ```{r example-in-depth-one-function, eval=FALSE}
 library(cacti)
 
-file_pheno_meta <- system.file("extdata", "test_pheno_meta.bed", package = "cacti")
-file_pheno <- system.file("extdata", "test_pheno.txt", package = "cacti")
-file_cov <- system.file("extdata", "test_covariates.txt", package = "cacti")
-file_vcf <- system.file("extdata", "test_geno.vcf", package = "cacti")
+file_pheno_meta <- system.file("extdata", "test_cacti_peak_chr5_pheno_meta.bed", package = "cacti")
+file_pheno <- system.file("extdata", "test_cacti_peak_chr5_pheno.txt", package = "cacti")
+file_cov <- system.file("extdata", "test_cacti_peak_chr5_covariates.txt", package = "cacti")
+file_vcf <- system.file("extdata", "test_cacti_peak_chr5_geno.vcf", package = "cacti")
 
 res <- cacti_peak_window(
   window_size = "50kb",
@@ -261,7 +261,7 @@ res
 ### B. Optional summary-stat workflow
 
 ```{r example-in-depth-summary, eval=TRUE}
-qtl_file <- system.file("extdata", "test_qtl_sum_stats_chr5.txt.gz", package = "cacti")
+qtl_file <- system.file("extdata", "test_cacti_peak_chr5_matrixqtl_sumstats.txt.gz", package = "cacti")
 
 res_qtl <- cacti_peak_window(
   window_size = "50kb",

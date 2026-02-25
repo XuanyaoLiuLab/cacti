@@ -442,10 +442,10 @@ CACTI-specific phenotype metadata columns (<code>phe_id</code>, <code>phe_chr</c
 <code>phe_to</code>) used for window-based grouping and chromosome iteration.</p>
 <pre class="r"><code>library(cacti)
 
-file_pheno_meta &lt;- system.file(&quot;extdata&quot;, &quot;test_pheno_meta.bed&quot;, package = &quot;cacti&quot;)
-file_pheno &lt;- system.file(&quot;extdata&quot;, &quot;test_pheno.txt&quot;, package = &quot;cacti&quot;)
-file_cov &lt;- system.file(&quot;extdata&quot;, &quot;test_covariates.txt&quot;, package = &quot;cacti&quot;)
-file_vcf &lt;- system.file(&quot;extdata&quot;, &quot;test_geno.vcf&quot;, package = &quot;cacti&quot;)
+file_pheno_meta &lt;- system.file(&quot;extdata&quot;, &quot;test_cacti_peak_chr5_pheno_meta.bed&quot;, package = &quot;cacti&quot;)
+file_pheno &lt;- system.file(&quot;extdata&quot;, &quot;test_cacti_peak_chr5_pheno.txt&quot;, package = &quot;cacti&quot;)
+file_cov &lt;- system.file(&quot;extdata&quot;, &quot;test_cacti_peak_chr5_covariates.txt&quot;, package = &quot;cacti&quot;)
+file_vcf &lt;- system.file(&quot;extdata&quot;, &quot;test_cacti_peak_chr5_geno.vcf&quot;, package = &quot;cacti&quot;)
 
 head(data.table::fread(file_pheno_meta))
 head(data.table::fread(file_pheno))[, 1:5]
@@ -463,7 +463,7 @@ columns:
 <li><code>z</code></li>
 </ul></li>
 </ul>
-<pre class="r"><code>qtl_file &lt;- system.file(&quot;extdata&quot;, &quot;test_qtl_sum_stats_chr5.txt.gz&quot;, package = &quot;cacti&quot;)
+<pre class="r"><code>qtl_file &lt;- system.file(&quot;extdata&quot;, &quot;test_cacti_peak_chr5_matrixqtl_sumstats.txt.gz&quot;, package = &quot;cacti&quot;)
 head(data.table::fread(qtl_file))</code></pre>
 <hr />
 </div>
@@ -649,10 +649,10 @@ and aggregate with FDR.</li>
 <h3>A. One-function workflow (recommended)</h3>
 <pre class="r"><code>library(cacti)
 
-file_pheno_meta &lt;- system.file(&quot;extdata&quot;, &quot;test_pheno_meta.bed&quot;, package = &quot;cacti&quot;)
-file_pheno &lt;- system.file(&quot;extdata&quot;, &quot;test_pheno.txt&quot;, package = &quot;cacti&quot;)
-file_cov &lt;- system.file(&quot;extdata&quot;, &quot;test_covariates.txt&quot;, package = &quot;cacti&quot;)
-file_vcf &lt;- system.file(&quot;extdata&quot;, &quot;test_geno.vcf&quot;, package = &quot;cacti&quot;)
+file_pheno_meta &lt;- system.file(&quot;extdata&quot;, &quot;test_cacti_peak_chr5_pheno_meta.bed&quot;, package = &quot;cacti&quot;)
+file_pheno &lt;- system.file(&quot;extdata&quot;, &quot;test_cacti_peak_chr5_pheno.txt&quot;, package = &quot;cacti&quot;)
+file_cov &lt;- system.file(&quot;extdata&quot;, &quot;test_cacti_peak_chr5_covariates.txt&quot;, package = &quot;cacti&quot;)
+file_vcf &lt;- system.file(&quot;extdata&quot;, &quot;test_cacti_peak_chr5_geno.vcf&quot;, package = &quot;cacti&quot;)
 
 res &lt;- cacti_peak_window(
   window_size = &quot;50kb&quot;,
@@ -670,7 +670,7 @@ res</code></pre>
 </div>
 <div id="b.-optional-summary-stat-workflow" class="section level3">
 <h3>B. Optional summary-stat workflow</h3>
-<pre class="r"><code>qtl_file &lt;- system.file(&quot;extdata&quot;, &quot;test_qtl_sum_stats_chr5.txt.gz&quot;, package = &quot;cacti&quot;)
+<pre class="r"><code>qtl_file &lt;- system.file(&quot;extdata&quot;, &quot;test_cacti_peak_chr5_matrixqtl_sumstats.txt.gz&quot;, package = &quot;cacti&quot;)
 
 res_qtl &lt;- cacti_peak_window(
   window_size = &quot;50kb&quot;,

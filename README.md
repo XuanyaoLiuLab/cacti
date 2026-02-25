@@ -52,6 +52,78 @@ library(cacti)
 
 ------------------------------------------------------------------------
 
+## Getting Started in 5 Minutes
+
+### 1) Run CACTI peak-window (genome-wide default)
+
+```r
+library(cacti)
+
+file_pheno_meta <- system.file("extdata", "test_cacti_peak_chr5_pheno_meta.bed", package = "cacti")
+file_pheno <- system.file("extdata", "test_cacti_peak_chr5_pheno.txt", package = "cacti")
+file_cov <- system.file("extdata", "test_cacti_peak_chr5_covariates.txt", package = "cacti")
+file_vcf <- system.file("extdata", "test_cacti_peak_chr5_geno.vcf", package = "cacti")
+qtl_file <- system.file("extdata", "test_cacti_peak_chr5_matrixqtl_sumstats.txt.gz", package = "cacti")
+
+res <- cacti_peak_window(
+  window_size = "50kb",
+  file_pheno_meta = file_pheno_meta,
+  file_pheno = file_pheno,
+  file_cov = file_cov,
+  file_vcf = file_vcf,
+  chr = "All",      # default: run all chromosomes in file_pheno_meta
+  do_fdr = TRUE,    # default: add FDR correction
+  out_prefix = tempfile("cacti_quickstart_")
+)
+
+res$file_fdr_out
+
+# Optional summary-stats mode
+res_qtl <- cacti_peak_window(
+  window_size = "50kb",
+  file_pheno_meta = file_pheno_meta,
+  file_pheno = file_pheno,
+  file_cov = file_cov,
+  qtl_file = qtl_file,
+  chr = "chr5",
+  do_fdr = TRUE,
+  out_prefix = tempfile("cacti_quickstart_qtl_")
+)
+
+res_qtl$file_fdr_out
+```
+
+### 2) Run CACTI-S prep (raw BAM to cis-QTL summary stats)
+
+```r
+library(cacti)
+
+file_bams <- c(
+  system.file("extdata", "Sample1.bam", package = "cacti"),
+  system.file("extdata", "Sample2.bam", package = "cacti"),
+  system.file("extdata", "Sample3.bam", package = "cacti"),
+  system.file("extdata", "Sample4.bam", package = "cacti")
+)
+file_vcf <- system.file("extdata", "test_geno.vcf", package = "cacti")
+file_cov <- system.file("extdata", "test_cov.txt", package = "cacti")
+
+res_s <- cacti_s_prep(
+  file_bams = file_bams,
+  file_vcf = file_vcf,
+  file_cov = file_cov,
+  out_dir = tempdir(),
+  out_prefix = "cacti_s_quickstart"
+)
+
+res_s
+```
+
+Notes:
+- Input conventions are standard QTL inputs: genotype, phenotype, and covariates with matched sample IDs.
+- `cacti_peak_window()` also supports summary-statistics mode via `qtl_file`/`qtl_files`.
+
+------------------------------------------------------------------------
+
 ## Documentation
 
 ### Vignettes
