@@ -66,7 +66,7 @@ file_vcf <- system.file("extdata", "test_cacti_peak_chr5_geno.vcf", package = "c
 qtl_file <- system.file("extdata", "test_cacti_peak_chr5_matrixqtl_sumstats.txt.gz", package = "cacti")
 
 res <- cacti_peak_window(
-  window_size = "50kb",
+  window_size = "50kb", # window size to group peaks
   file_pheno_meta = file_pheno_meta,
   file_pheno = file_pheno,
   file_cov = file_cov,
