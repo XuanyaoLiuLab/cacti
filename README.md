@@ -155,6 +155,7 @@ vignette("cacti_s_prep", package = "cacti")
 
 
 ## Citation
+The CACTI method was developed by Lili Wang https://x.com/liliw_wang. 
 
 If you use the CACTI method, please cite:
 
