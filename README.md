@@ -41,7 +41,7 @@ Before installing CACTI, ensure you have:
 
 ``` r
 install.packages("devtools")   # if not installed yet
-devtools::install_github("XuanyaoLiuLab/cacti", build_vignettes = TRUE)
+devtools::install_github("XuanyaoLiuLab/cacti", build_vignettes = FALSE)
 ```
 
 After installation:
