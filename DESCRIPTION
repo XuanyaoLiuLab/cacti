@@ -25,7 +25,8 @@ Imports:
     stringr,
     tibble,
     tidyr,
-    Rsubread
+    Rsubread,
+    MatrixEQTL
 Suggests: 
     knitr,
     rmarkdown,
@@ -35,6 +36,5 @@ Suggests:
     GenomeInfoDb,
     BiocGenerics,
     edgeR,
-    MatrixEQTL,
     CompQuadForm
 VignetteBuilder: knitr
