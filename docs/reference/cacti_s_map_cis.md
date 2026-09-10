@@ -1,7 +1,8 @@
 # Run Nominal Cis-QTL Mapping (CACTI-S)
 
 Performs linear regression using MatrixEQTL to generate summary
-statistics.
+statistics. The output includes signed Z-scores (`z`) and P values
+(`pval`).
 
 ## Usage
 

@@ -3,7 +3,7 @@
 
 ## Overview
 
-<img src="man/figures/cacti_overview.png" width="2055" />
+<img src="man/figures/cacti_overview.png" width="2055" alt="Overview of the CACTI chromatin QTL mapping workflow" />
 
 CACTI
 implements a powerful method for chromatin QTL mapping that leverages the correlation structure of nearby regulatory elements.
@@ -27,22 +27,20 @@ The package offers two main modules:
 
 ## Installation
 
-### Prerequisites
+Use a current R release. CACTI requires R >= 4.1.0; its dependencies may require newer R. Check your version with `R.version.string`.
 
-Before installing CACTI, ensure you have:
-
-- **R >= 4.0.0** - Check your version with `R.version.string`
-- **Pandoc** - Required for building vignettes. See [pandoc github](https://github.com/cderv/pandoc) for detailed instruction. 
-- **ACAT** - Required for association testing. See [ACAT github](https://github.com/yaowuliu/ACAT) for detailed instruction.
-- **qvalue** - Required for FDR correction. See [qvalue github](https://github.com/StoreyLab/qvalue) for detailed instruction.
-- **Rsubread** - Required for read counting in CACTI-S. See [Rsubread website](https://www.bioconductor.org/packages//2.10/bioc/html/Rsubread.html) for detailed instruction.
-
-
-
-``` r
-install.packages("devtools")   # if not installed yet
-devtools::install_github("XuanyaoLiuLab/cacti", build_vignettes = FALSE)
+```r
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes", repos = "https://cloud.r-project.org")
+}
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager", repos = "https://cloud.r-project.org")
+}
+options(repos = BiocManager::repositories())
+remotes::install_github("XuanyaoLiuLab/cacti", build_vignettes = FALSE)
 ```
+
+Required CRAN and Bioconductor packages are installed automatically.
 
 After installation:
 
@@ -119,8 +117,11 @@ res_s
 ```
 
 Notes:
+
 - Input conventions are standard QTL inputs: genotype, phenotype, and covariates with matched sample IDs.
 - `cacti_peak_window()` also supports summary-statistics mode via `qtl_file`/`qtl_files`.
+
+The bundled synthetic data demonstrate the workflows; they do not evaluate statistical power, calibration, or biological validity.
 
 ------------------------------------------------------------------------
 
@@ -134,7 +135,19 @@ See the [full documentation and vignettes](https://xuanyaoliulab.github.io/cacti
 
 - CACTI-S Pipeline
 
-Vignettes can also be viewed within the installed package -
+The installation above skips vignette building; use the online documentation. To also install local vignettes, first install [Pandoc](https://pandoc.org/installing.html), then run:
+
+```r
+options(repos = BiocManager::repositories())
+remotes::install_github(
+  "XuanyaoLiuLab/cacti",
+  dependencies = TRUE,
+  build_vignettes = TRUE,
+  force = TRUE
+)
+```
+
+After installation with vignettes:
 
 ```r
 vignette("cacti_peak_window", package = "cacti")

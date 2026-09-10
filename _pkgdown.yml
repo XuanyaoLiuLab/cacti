@@ -1,10 +1,26 @@
 template:
   bootstrap: 5
 
-url: https://liliw-w.github.io/cacti
+url: https://xuanyaoliulab.github.io/cacti
 
 home:
   title: "CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin QTL Detection"
+  sidebar:
+    structure: [links, license, community, citation, developers, dev]
+    components:
+      developers:
+        title: Developers
+        text: |
+          Lili Wang<br><small class="roles">Author</small>
+
+          Zining Qi<br><small class="roles">Contributor</small>
+
+          Xuanyao Liu<br><small class="roles">Contributor</small>
+
+footer:
+  structure:
+    left: ~
+    right: built_with
 
 navbar:
   structure:
@@ -45,6 +61,7 @@ reference:
       - cacti_s_count
       - cacti_s_preprocess
       - cacti_s_map_cis
+      - cacti_matrixqtl_cis
 
 articles:
   - title: "Vignettes"

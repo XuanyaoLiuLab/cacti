@@ -3,6 +3,7 @@
 #' Thin wrapper around [cacti_s_map_cis()] that generates a summary-statistics
 #' table with columns `phe_id`, `var_id`, `z`, `pval` for downstream CACTI
 #' peak-window testing.
+#' The `z` column contains signed Z-scores.
 #'
 #' @inheritParams cacti_s_map_cis
 #'

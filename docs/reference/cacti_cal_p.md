@@ -12,7 +12,7 @@ cacti_cal_p(
   file_pheno_cov_residual,
   file_p_peak_group,
   dir_pco = system.file("pco", package = "cacti"),
-  min_peaks = 2
+  min_peaks = 1
 )
 ```
 
@@ -48,8 +48,9 @@ cacti_cal_p(
 
 - min_peaks:
 
-  Minimum number of peaks required in a group to run the multivariate
-  PCO test (\>= min_peaks -\> PCO; \< min_peaks -\> univariate p).
+  Minimum number of peaks required for a window to be included in
+  testing. Included windows with 1 peak use univariate p-values;
+  included windows with \>=2 peaks use PCO.
 
 ## Value
 

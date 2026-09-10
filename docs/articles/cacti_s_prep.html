@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>CACTI-S: segment-based data preparation &amp; mapping • cacti</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="CACTI-S: segment-based data preparation &amp; mapping">
 </head>
@@ -37,7 +37,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/liliw-w/cacti/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/XuanyaoLiuLab/cacti/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -54,7 +54,7 @@
       <h1>CACTI-S: segment-based data preparation &amp; mapping</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/liliw-w/cacti/blob/HEAD/vignettes/cacti_s_prep.Rmd" class="external-link"><code>vignettes/cacti_s_prep.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/XuanyaoLiuLab/cacti/blob/HEAD/vignettes/cacti_s_prep.Rmd" class="external-link"><code>vignettes/cacti_s_prep.Rmd</code></a></small>
       <div class="d-none name"><code>cacti_s_prep.Rmd</code></div>
     </div>
 
@@ -78,7 +78,7 @@ these segments.</li>
 normalization.</li>
 <li>
 <strong>Mapping</strong>: Run cis-QTL mapping of the segments using
-<code>MatrixEQTL</code> to generate summary statistics required the
+<code>MatrixEQTL</code> to generate summary statistics required by the
 multivariate CACTI model.</li>
 </ul>
 <p>This vignette explains:</p>
@@ -169,10 +169,11 @@ mapping.</p></li>
 <ul>
 <li><p>Input: Normalized phenotype matrix, genotype data (VCF), and
 covariates.</p></li>
-<li><p>Process: Runs `MatrixEQTL for every variant–segment pair within a
+<li><p>Process: Runs MatrixEQTL for every variant–segment pair within a
 defined cis window (e.g., 100kb).</p></li>
-<li><p>Output: Cis-QTL summary statistics (Z-scores), which serve as the
-primary input for the CACTI multivariate test.</p></li>
+<li><p>Output: Cis-QTL summary statistics (signed association
+statistics), which serve as the primary input for the CACTI multivariate
+test.</p></li>
 </ul>
 </div>
 <div class="section level2">
@@ -185,8 +186,13 @@ intermediate files.</p>
 <h3 id="locate-test-data">1. Locate test data<a class="anchor" aria-label="anchor" href="#locate-test-data"></a>
 </h3>
 <p>We will use the small test files bundled with the <code>cacti</code>
-package. In a real analysis, these would be your actual BAM and VCF
-paths.</p>
+package. The four BAM files contain distinct count profiles across
+twelve 5-kb segments. These synthetic data demonstrate execution, not
+statistical power or biological validity. In a real analysis, replace
+these with your own BAM and VCF paths.</p>
+<p>Identical warnings are displayed only once on this page. The
+generated association statistics and P values are checked to be
+finite.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Locate the 4 test BAM files</span></span>
 <span><span class="va">bam_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span></span>
@@ -195,7 +201,7 @@ paths.</p>
 <span>  full.names <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Locate Genotype (VCF), Covariate, and Peak files</span></span>
+<span><span class="co"># Locate genotype and covariate files</span></span>
 <span><span class="va">file_vcf</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_geno.vcf"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
 <span><span class="va">file_cov</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_cov.txt"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
 <span></span>
@@ -219,12 +225,13 @@ paths.</p>
 segments with peak intensity CPM &gt; 1 in &gt; 20% of samples)</li>
 </ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cacti_s_prep.html">cacti_s_prep</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">out_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"cacti_s_example"</span><span class="op">)</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cacti_s_prep.html">cacti_s_prep</a></span><span class="op">(</span></span>
 <span>  file_bams <span class="op">=</span> <span class="va">bam_files</span>,</span>
 <span>  file_vcf <span class="op">=</span> <span class="va">file_vcf</span>,</span>
 <span>  file_cov <span class="op">=</span> <span class="va">file_cov</span>,</span>
 <span>  </span>
-<span>  out_dir <span class="op">=</span> <span class="st">"../inst/extdata/test_results"</span>,</span>
+<span>  out_dir <span class="op">=</span> <span class="va">out_dir</span>,</span>
 <span>  out_prefix <span class="op">=</span> <span class="st">"test"</span>,</span>
 <span></span>
 <span>  <span class="co"># Pipeline Parameters</span></span>
@@ -237,16 +244,17 @@ segments with peak intensity CPM &gt; 1 in &gt; 20% of samples)</li>
 <span>  <span class="co"># Use 1 thread for this small demo</span></span>
 <span>  threads <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Created output directory: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example</span></span>
 <span><span class="co">#&gt; =======================================================</span></span>
 <span><span class="co">#&gt;  CACTI-S Preparation Pipeline</span></span>
 <span><span class="co">#&gt; =======================================================</span></span>
-<span><span class="co">#&gt; Output Directory: ../inst/extdata/test_results</span></span>
+<span><span class="co">#&gt; Output Directory: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example</span></span>
 <span><span class="co">#&gt; Input BAMs: 4</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [Step 1] Creating Genomic Segments...</span></span>
 <span><span class="co">#&gt; Using built-in chromosome sizes for: hg19</span></span>
 <span><span class="co">#&gt; Generating 5kb segments for 22 autosomes (chr1-chr22)...</span></span>
-<span><span class="co">#&gt; Success! Created 576216 segments. Saved to: ../inst/extdata/test_results/test_segments.saf</span></span>
+<span><span class="co">#&gt; Success! Created 576216 segments. Saved to: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_segments.saf</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [Step 2] Counting Reads...</span></span>
 <span><span class="co">#&gt; Counting reads for 4 BAM files...</span></span>
@@ -258,7 +266,7 @@ segments with peak intensity CPM &gt; 1 in &gt; 20% of samples)</li>
 <span><span class="co">#&gt;             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |</span></span>
 <span><span class="co">#&gt;               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |</span></span>
 <span><span class="co">#&gt;         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/</span></span>
-<span><span class="co">#&gt;        Rsubread 2.20.0</span></span>
+<span><span class="co">#&gt;        Rsubread 2.24.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; //========================== featureCounts setting ===========================\\</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
@@ -293,48 +301,48 @@ segments with peak intensity CPM &gt; 1 in &gt; 20% of samples)</li>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; || Process BAM file Sample1.bam...                                            ||</span></span>
 <span><span class="co">#&gt; ||    Single-end reads are included.                                          ||</span></span>
-<span><span class="co">#&gt; ||    Total alignments : 50                                                   ||</span></span>
-<span><span class="co">#&gt; ||    Successfully assigned alignments : 50 (100.0%)                          ||</span></span>
+<span><span class="co">#&gt; ||    Total alignments : 719                                                  ||</span></span>
+<span><span class="co">#&gt; ||    Successfully assigned alignments : 719 (100.0%)                         ||</span></span>
 <span><span class="co">#&gt; ||    Running time : 0.00 minutes                                             ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; || Process BAM file Sample2.bam...                                            ||</span></span>
 <span><span class="co">#&gt; ||    Single-end reads are included.                                          ||</span></span>
-<span><span class="co">#&gt; ||    Total alignments : 75                                                   ||</span></span>
-<span><span class="co">#&gt; ||    Successfully assigned alignments : 75 (100.0%)                          ||</span></span>
+<span><span class="co">#&gt; ||    Total alignments : 674                                                  ||</span></span>
+<span><span class="co">#&gt; ||    Successfully assigned alignments : 674 (100.0%)                         ||</span></span>
 <span><span class="co">#&gt; ||    Running time : 0.00 minutes                                             ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; || Process BAM file Sample3.bam...                                            ||</span></span>
 <span><span class="co">#&gt; ||    Single-end reads are included.                                          ||</span></span>
-<span><span class="co">#&gt; ||    Total alignments : 50                                                   ||</span></span>
-<span><span class="co">#&gt; ||    Successfully assigned alignments : 50 (100.0%)                          ||</span></span>
+<span><span class="co">#&gt; ||    Total alignments : 733                                                  ||</span></span>
+<span><span class="co">#&gt; ||    Successfully assigned alignments : 733 (100.0%)                         ||</span></span>
 <span><span class="co">#&gt; ||    Running time : 0.00 minutes                                             ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; || Process BAM file Sample4.bam...                                            ||</span></span>
 <span><span class="co">#&gt; ||    Single-end reads are included.                                          ||</span></span>
-<span><span class="co">#&gt; ||    Total alignments : 75                                                   ||</span></span>
-<span><span class="co">#&gt; ||    Successfully assigned alignments : 75 (100.0%)                          ||</span></span>
+<span><span class="co">#&gt; ||    Total alignments : 590                                                  ||</span></span>
+<span><span class="co">#&gt; ||    Successfully assigned alignments : 590 (100.0%)                         ||</span></span>
 <span><span class="co">#&gt; ||    Running time : 0.00 minutes                                             ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; || Write the final count table.                                               ||</span></span>
 <span><span class="co">#&gt; || Write the read assignment summary.                                         ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; \\============================================================================//</span></span>
-<span><span class="co">#&gt; Success! Counts written to: ../inst/extdata/test_results/test_raw_counts.txt</span></span>
+<span><span class="co">#&gt; Success! Counts written to: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_raw_counts.txt</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [Step 3] Preprocessing (QC, Filter, Normalize)...</span></span>
 <span><span class="co">#&gt; === Starting Preprocessing ===</span></span>
-<span><span class="co">#&gt;   Input: ../inst/extdata/test_results/test_raw_counts.txt</span></span>
+<span><span class="co">#&gt;   Input: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_raw_counts.txt</span></span>
 <span><span class="co">#&gt;   Filter Mode: cpm_threshold</span></span>
 <span><span class="co">#&gt;   Cleaned sample names: Sample1, Sample2, Sample3...</span></span>
 <span><span class="co">#&gt;   Initial Features: 576216</span></span>
 <span><span class="co">#&gt;   Initial Samples:  4</span></span>
-<span><span class="co">#&gt;   Features after removing all-zeros: 2</span></span>
+<span><span class="co">#&gt;   Features after removing all-zeros: 12</span></span>
 <span><span class="co">#&gt;   Filtering by intensity: CPM &gt; 1 in &gt; 20% samples</span></span>
-<span><span class="co">#&gt;   Features kept: 2</span></span>
+<span><span class="co">#&gt;   Features kept: 12</span></span>
 <span><span class="co">#&gt;   Standardizing (Z-score per feature)...</span></span>
 <span><span class="co">#&gt;   Rank Normalizing (INT per sample)...</span></span>
-<span><span class="co">#&gt; Success! Processed data written to: ../inst/extdata/test_results/test_pheno_norm.txt</span></span>
-<span><span class="co">#&gt; Success! Processed data meta written to: ../inst/extdata/test_results/test_pheno_norm_meta.txt</span></span>
+<span><span class="co">#&gt; Success! Processed data written to: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_pheno_norm.txt</span></span>
+<span><span class="co">#&gt; Success! Processed data meta written to: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_pheno_norm_meta.txt</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [Step 4] Mapping Cis-QTLs...</span></span>
 <span><span class="co">#&gt; Preparing phenotype data...</span></span>
@@ -342,53 +350,68 @@ segments with peak intensity CPM &gt; 1 in &gt; 20% of samples)</li>
 <span><span class="co">#&gt; Converting VCF to genotype matrix...</span></span>
 <span><span class="co">#&gt; Preparing covariates...</span></span>
 <span><span class="co">#&gt; Rows read: 51 done.</span></span>
-<span><span class="co">#&gt; Rows read: 2 done.</span></span>
+<span><span class="co">#&gt; Rows read: 12 done.</span></span>
 <span><span class="co">#&gt; Rows read: 1 done.</span></span>
 <span><span class="co">#&gt; Running MatrixEQTL...</span></span>
 <span><span class="co">#&gt; Matching data files and location files</span></span>
-<span><span class="co">#&gt; 2 of 2 genes matched</span></span>
+<span><span class="co">#&gt; 12 of 12 genes matched</span></span>
 <span><span class="co">#&gt; 51 of 51 SNPs matched</span></span>
-<span><span class="co">#&gt; Task finished in 0.003 seconds</span></span>
+<span><span class="co">#&gt; Task finished in 0.001 seconds</span></span>
 <span><span class="co">#&gt; Processing covariates</span></span>
-<span><span class="co">#&gt; Task finished in 0.002 seconds</span></span>
+<span><span class="co">#&gt; Task finished in 0 seconds</span></span>
 <span><span class="co">#&gt; Processing gene expression data (imputation, residualization)</span></span>
-<span><span class="co">#&gt; Task finished in 0.002 seconds</span></span>
+<span><span class="co">#&gt; Task finished in 0.001 seconds</span></span>
 <span><span class="co">#&gt; Creating output file(s)</span></span>
-<span><span class="co">#&gt; Task finished in 0.006 seconds</span></span>
+<span><span class="co">#&gt; Task finished in 0.001 seconds</span></span>
 <span><span class="co">#&gt; Performing eQTL analysis</span></span>
-<span><span class="co">#&gt; 100.00% done, 102 cis-eQTLs</span></span>
-<span><span class="co">#&gt; Task finished in 0.009 seconds</span></span>
+<span><span class="co">#&gt; 100.00% done, 612 cis-eQTLs</span></span>
+<span><span class="co">#&gt; Task finished in 0.004 seconds</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Success! Stats written to: ../inst/extdata/test_results/test_cis_qtl_stats.txt</span></span>
-<span><span class="co">#&gt; Mapping complete: ../inst/extdata/test_results/test_cis_qtl_stats.txt</span></span>
+<span><span class="co">#&gt; Success! Stats written to: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_cis_qtl_stats.txt</span></span>
+<span><span class="co">#&gt; Mapping complete: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_cis_qtl_stats.txt</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; =======================================================</span></span>
 <span><span class="co">#&gt;  Pipeline Complete!</span></span>
 <span><span class="co">#&gt; =======================================================</span></span>
 <span><span class="co">#&gt; Summary of Generated Files:</span></span>
-<span><span class="co">#&gt;   [1] Segments (SAF):      ../inst/extdata/test_results/test_segments.saf</span></span>
-<span><span class="co">#&gt;   [2] Raw Counts:          ../inst/extdata/test_results/test_raw_counts.txt</span></span>
-<span><span class="co">#&gt;   [3] Normalized Pheno:    ../inst/extdata/test_results/test_pheno_norm.txt</span></span>
-<span><span class="co">#&gt;   [4] Cis-QTL Stats:       ../inst/extdata/test_results/test_cis_qtl_stats.txt</span></span>
+<span><span class="co">#&gt;   [1] Segments (SAF):      /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_segments.saf</span></span>
+<span><span class="co">#&gt;   [2] Raw Counts:          /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_raw_counts.txt</span></span>
+<span><span class="co">#&gt;   [3] Normalized Pheno:    /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_pheno_norm.txt</span></span>
+<span><span class="co">#&gt;   [4] Cis-QTL Stats:       /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_cis_qtl_stats.txt</span></span>
 <span><span class="co">#&gt; =======================================================</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="explore-results">3. Explore results<a class="anchor" aria-label="anchor" href="#explore-results"></a>
 </h3>
-<p>The function returns a list of paths to the generated files.</p>
+<p>The function returns a list of paths to the generated files. Outputs
+are written to a temporary directory in this example; use a directory of
+your choice to keep them. The table below shows the filenames.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $saf</span></span>
-<span><span class="co">#&gt; [1] "../inst/extdata/test_results/test_segments.saf"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $raw_counts</span></span>
-<span><span class="co">#&gt; [1] "../inst/extdata/test_results/test_raw_counts.txt"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $pheno</span></span>
-<span><span class="co">#&gt; [1] "../inst/extdata/test_results/test_pheno_norm.txt"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $qtl_stats</span></span>
-<span><span class="co">#&gt; [1] "../inst/extdata/test_results/test_cis_qtl_stats.txt"</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span>, Filename <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Output</th>
+<th align="left">Filename</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">saf</td>
+<td align="left">test_segments.saf</td>
+</tr>
+<tr class="even">
+<td align="left">raw_counts</td>
+<td align="left">test_raw_counts.txt</td>
+</tr>
+<tr class="odd">
+<td align="left">pheno</td>
+<td align="left">test_pheno_norm.txt</td>
+</tr>
+<tr class="even">
+<td align="left">qtl_stats</td>
+<td align="left">test_cis_qtl_stats.txt</td>
+</tr>
+</tbody>
+</table>
 <div class="section level4">
 <h4 id="segments">Segments<a class="anchor" aria-label="anchor" href="#segments"></a>
 </h4>
@@ -450,7 +473,8 @@ genome.</p>
 </h4>
 <p>This file contains raw counts within the segments.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">raw_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">raw_counts</span>, header <span class="op">=</span> <span class="cn">TRUE</span>, nrows <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">raw_counts</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">raw_counts</span>, nrows <span class="op">=</span> <span class="fl">5</span>, data.table <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">raw_counts</span><span class="op">)</span><span class="op">[</span><span class="fl">7</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">raw_counts</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">raw_counts</span><span class="op">)</span><span class="op">[</span><span class="fl">7</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">raw_counts</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">raw_counts</span>, caption <span class="op">=</span> <span class="st">"Raw counts within segments (Top 5 Rows)"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Raw counts within segments (Top 5 Rows)</caption>
@@ -486,10 +510,10 @@ genome.</p>
 <td align="right">5000</td>
 <td align="left">.</td>
 <td align="right">5000</td>
-<td align="right">35</td>
-<td align="right">67</td>
-<td align="right">35</td>
-<td align="right">67</td>
+<td align="right">82</td>
+<td align="right">64</td>
+<td align="right">41</td>
+<td align="right">78</td>
 </tr>
 <tr class="even">
 <td align="left">chr1_5001_10000</td>
@@ -498,10 +522,10 @@ genome.</p>
 <td align="right">10000</td>
 <td align="left">.</td>
 <td align="right">5000</td>
-<td align="right">15</td>
-<td align="right">8</td>
-<td align="right">15</td>
-<td align="right">8</td>
+<td align="right">89</td>
+<td align="right">51</td>
+<td align="right">86</td>
+<td align="right">36</td>
 </tr>
 <tr class="odd">
 <td align="left">chr1_10001_15000</td>
@@ -510,10 +534,10 @@ genome.</p>
 <td align="right">15000</td>
 <td align="left">.</td>
 <td align="right">5000</td>
-<td align="right">0</td>
-<td align="right">0</td>
-<td align="right">0</td>
-<td align="right">0</td>
+<td align="right">56</td>
+<td align="right">41</td>
+<td align="right">73</td>
+<td align="right">84</td>
 </tr>
 <tr class="even">
 <td align="left">chr1_15001_20000</td>
@@ -522,10 +546,10 @@ genome.</p>
 <td align="right">20000</td>
 <td align="left">.</td>
 <td align="right">5000</td>
-<td align="right">0</td>
-<td align="right">0</td>
-<td align="right">0</td>
-<td align="right">0</td>
+<td align="right">10</td>
+<td align="right">83</td>
+<td align="right">63</td>
+<td align="right">30</td>
 </tr>
 <tr class="odd">
 <td align="left">chr1_20001_25000</td>
@@ -534,10 +558,10 @@ genome.</p>
 <td align="right">25000</td>
 <td align="left">.</td>
 <td align="right">5000</td>
-<td align="right">0</td>
-<td align="right">0</td>
-<td align="right">0</td>
-<td align="right">0</td>
+<td align="right">19</td>
+<td align="right">52</td>
+<td align="right">36</td>
+<td align="right">88</td>
 </tr>
 </tbody>
 </table>
@@ -545,13 +569,14 @@ genome.</p>
 <div class="section level4">
 <h4 id="normalized-phenotype-matrix">Normalized phenotype matrix<a class="anchor" aria-label="anchor" href="#normalized-phenotype-matrix"></a>
 </h4>
-<p>This file contains the filtered and normalized data with the segments
-positions data, ready for downstream analysis e.g. QTL mapping.</p>
+<p>This file contains filtered and normalized phenotypes, with segments
+in rows and samples in columns. Segment positions are stored in the
+separate metadata file.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pheno</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">pheno</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">pheno</span>, caption <span class="op">=</span> <span class="st">"Normalized phenotype matrix (Top Rows)"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pheno</span>, <span class="fl">5</span><span class="op">)</span>, digits <span class="op">=</span> <span class="fl">3</span>, caption <span class="op">=</span> <span class="st">"First five normalized segment phenotypes"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
-<caption>Normalized phenotype matrix (Top Rows)</caption>
+<caption>First five normalized segment phenotypes</caption>
 <thead><tr class="header">
 <th align="left">GeneID</th>
 <th align="right">Sample1</th>
@@ -562,17 +587,38 @@ positions data, ready for downstream analysis e.g. QTL mapping.</p>
 <tbody>
 <tr class="odd">
 <td align="left">chr1_1_5000</td>
-<td align="right">-0.6744898</td>
-<td align="right">0.6744898</td>
-<td align="right">-0.6744898</td>
-<td align="right">0.6744898</td>
+<td align="right">-0.105</td>
+<td align="right">-0.105</td>
+<td align="right">-1.732</td>
+<td align="right">0.812</td>
 </tr>
 <tr class="even">
 <td align="left">chr1_5001_10000</td>
-<td align="right">0.6744898</td>
-<td align="right">-0.6744898</td>
-<td align="right">0.6744898</td>
-<td align="right">-0.6744898</td>
+<td align="right">0.549</td>
+<td align="right">-0.549</td>
+<td align="right">1.150</td>
+<td align="right">-0.549</td>
+</tr>
+<tr class="odd">
+<td align="left">chr1_10001_15000</td>
+<td align="right">-0.549</td>
+<td align="right">-1.150</td>
+<td align="right">0.319</td>
+<td align="right">1.732</td>
+</tr>
+<tr class="even">
+<td align="left">chr1_15001_20000</td>
+<td align="right">-1.150</td>
+<td align="right">1.150</td>
+<td align="right">0.549</td>
+<td align="right">-0.105</td>
+</tr>
+<tr class="odd">
+<td align="left">chr1_20001_25000</td>
+<td align="right">-0.812</td>
+<td align="right">0.319</td>
+<td align="right">-0.812</td>
+<td align="right">1.150</td>
 </tr>
 </tbody>
 </table>
@@ -581,50 +627,74 @@ positions data, ready for downstream analysis e.g. QTL mapping.</p>
 <h4 id="cis-qtl-summary-statistics">Cis-QTL summary statistics<a class="anchor" aria-label="anchor" href="#cis-qtl-summary-statistics"></a>
 </h4>
 <p>This file contains the cis-QTL mapping associations of individual
-segments.</p>
+segments, with signed Z-scores (<code>z</code>) and P values
+(<code>pval</code>).</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">qtl_stats</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">qtl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">qtl_stats</span>, header <span class="op">=</span> <span class="cn">TRUE</span>, nrows <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span>  <span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">qtl</span>, caption <span class="op">=</span> <span class="st">"Cis-QTL summary statistics (Top 5 hits)"</span><span class="op">)</span></span>
+<span>  <span class="va">qtl</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">qtl_stats</span>, data.table <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="va">qtl_preview</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">qtl</span>, <span class="fl">5</span><span class="op">)</span></span>
+<span>  <span class="va">qtl_preview</span><span class="op">$</span><span class="va">pval</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/formatc.html" class="external-link">formatC</a></span><span class="op">(</span><span class="va">qtl_preview</span><span class="op">$</span><span class="va">pval</span>, format <span class="op">=</span> <span class="st">"e"</span>, digits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span>  <span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">qtl_preview</span>, digits <span class="op">=</span> <span class="fl">3</span>, caption <span class="op">=</span> <span class="st">"First five SNP-segment associations"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <table class="table">
-<caption>Cis-QTL summary statistics (Top 5 hits)</caption>
+<caption>First five SNP-segment associations</caption>
 <thead><tr class="header">
 <th align="left">phe_id</th>
 <th align="left">var_id</th>
 <th align="right">z</th>
-<th align="right">pval</th>
+<th align="left">pval</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">chr1_1_5000</td>
-<td align="left">snp_11</td>
-<td align="right">Inf</td>
-<td align="right">0</td>
+<td align="left">chr1_35001_40000</td>
+<td align="left">snp_5</td>
+<td align="right">-3.183</td>
+<td align="left">1.457e-03</td>
+</tr>
+<tr class="even">
+<td align="left">chr1_35001_40000</td>
+<td align="left">snp_40</td>
+<td align="right">3.183</td>
+<td align="left">1.457e-03</td>
+</tr>
+<tr class="odd">
+<td align="left">chr1_35001_40000</td>
+<td align="left">snp_42</td>
+<td align="right">-3.183</td>
+<td align="left">1.457e-03</td>
 </tr>
 <tr class="even">
 <td align="left">chr1_1_5000</td>
 <td align="left">snp_13</td>
-<td align="right">Inf</td>
-<td align="right">0</td>
+<td align="right">2.700</td>
+<td align="left">6.931e-03</td>
 </tr>
 <tr class="odd">
 <td align="left">chr1_1_5000</td>
 <td align="left">snp_22</td>
-<td align="right">-Inf</td>
-<td align="right">0</td>
+<td align="right">-2.700</td>
+<td align="left">6.931e-03</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  Output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Retained segments"</span>, <span class="st">"SNP-segment associations"</span><span class="op">)</span>,</span>
+<span>  Number <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pheno</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">qtl</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Output</th>
+<th align="right">Number</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Retained segments</td>
+<td align="right">12</td>
 </tr>
 <tr class="even">
-<td align="left">chr1_1_5000</td>
-<td align="left">snp_33</td>
-<td align="right">Inf</td>
-<td align="right">0</td>
-</tr>
-<tr class="odd">
-<td align="left">chr1_1_5000</td>
-<td align="left">snp_44</td>
-<td align="right">Inf</td>
-<td align="right">0</td>
+<td align="left">SNP-segment associations</td>
+<td align="right">612</td>
 </tr>
 </tbody>
 </table>
@@ -642,8 +712,8 @@ whole pipeline separately.</p>
 </h3>
 <p>First, we generate a SAF (Simplified Annotation Format) file that
 defines the genomic segments.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">file_saf</span> <span class="op">&lt;-</span> <span class="st">"../inst/extdata/test_results/test_segments.txt"</span></span>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">file_saf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out_dir</span>, <span class="st">"test_segments.saf"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/cacti_s_create_segments.html">cacti_s_create_segments</a></span><span class="op">(</span></span>
 <span>  file_saf_out <span class="op">=</span> <span class="va">file_saf</span>, <span class="co"># Output path for the SAF file.</span></span>
@@ -652,8 +722,8 @@ defines the genomic segments.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Using built-in chromosome sizes for: hg19</span></span>
 <span><span class="co">#&gt; Generating 5kb segments for 22 autosomes (chr1-chr22)...</span></span>
-<span><span class="co">#&gt; Success! Created 576216 segments. Saved to: ../inst/extdata/test_results/test_segments.txt</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; Success! Created 576216 segments. Saved to: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_segments.saf</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">file_saf</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;             GeneID  Chr Start   End Strand</span></span>
 <span><span class="co">#&gt; 1      chr1_1_5000 chr1     1  5000      .</span></span>
@@ -668,8 +738,8 @@ defines the genomic segments.</p>
 </h3>
 <p>Next, we quantify reads falling into these segments for all BAM
 files.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">file_counts</span> <span class="op">&lt;-</span> <span class="st">"../inst/extdata/test_results/test_raw_counts.txt"</span></span>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">file_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out_dir</span>, <span class="st">"test_raw_counts.txt"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/cacti_s_count.html">cacti_s_count</a></span><span class="op">(</span></span>
 <span>  file_bams <span class="op">=</span> <span class="va">bam_files</span>, <span class="co"># Character vector of BAM file paths.</span></span>
@@ -686,7 +756,7 @@ files.</p>
 <span><span class="co">#&gt;             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |</span></span>
 <span><span class="co">#&gt;               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |</span></span>
 <span><span class="co">#&gt;         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/</span></span>
-<span><span class="co">#&gt;        Rsubread 2.20.0</span></span>
+<span><span class="co">#&gt;        Rsubread 2.24.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; //========================== featureCounts setting ===========================\\</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
@@ -699,7 +769,7 @@ files.</p>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; ||              Paired-end : no                                               ||</span></span>
 <span><span class="co">#&gt; ||        Count read pairs : no                                               ||</span></span>
-<span><span class="co">#&gt; ||              Annotation : test_segments.txt (SAF)                          ||</span></span>
+<span><span class="co">#&gt; ||              Annotation : test_segments.saf (SAF)                          ||</span></span>
 <span><span class="co">#&gt; ||      Dir for temp files : .                                                ||</span></span>
 <span><span class="co">#&gt; ||                 Threads : 1                                                ||</span></span>
 <span><span class="co">#&gt; ||                   Level : meta-feature level                               ||</span></span>
@@ -714,56 +784,56 @@ files.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; //================================= Running ==================================\\</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
-<span><span class="co">#&gt; || Load annotation file test_segments.txt ...                                 ||</span></span>
+<span><span class="co">#&gt; || Load annotation file test_segments.saf ...                                 ||</span></span>
 <span><span class="co">#&gt; ||    Features : 576216                                                       ||</span></span>
 <span><span class="co">#&gt; ||    Meta-features : 576216                                                  ||</span></span>
 <span><span class="co">#&gt; ||    Chromosomes/contigs : 22                                                ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; || Process BAM file Sample1.bam...                                            ||</span></span>
 <span><span class="co">#&gt; ||    Single-end reads are included.                                          ||</span></span>
-<span><span class="co">#&gt; ||    Total alignments : 50                                                   ||</span></span>
-<span><span class="co">#&gt; ||    Successfully assigned alignments : 50 (100.0%)                          ||</span></span>
+<span><span class="co">#&gt; ||    Total alignments : 719                                                  ||</span></span>
+<span><span class="co">#&gt; ||    Successfully assigned alignments : 719 (100.0%)                         ||</span></span>
 <span><span class="co">#&gt; ||    Running time : 0.00 minutes                                             ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; || Process BAM file Sample2.bam...                                            ||</span></span>
 <span><span class="co">#&gt; ||    Single-end reads are included.                                          ||</span></span>
-<span><span class="co">#&gt; ||    Total alignments : 75                                                   ||</span></span>
-<span><span class="co">#&gt; ||    Successfully assigned alignments : 75 (100.0%)                          ||</span></span>
+<span><span class="co">#&gt; ||    Total alignments : 674                                                  ||</span></span>
+<span><span class="co">#&gt; ||    Successfully assigned alignments : 674 (100.0%)                         ||</span></span>
 <span><span class="co">#&gt; ||    Running time : 0.00 minutes                                             ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; || Process BAM file Sample3.bam...                                            ||</span></span>
 <span><span class="co">#&gt; ||    Single-end reads are included.                                          ||</span></span>
-<span><span class="co">#&gt; ||    Total alignments : 50                                                   ||</span></span>
-<span><span class="co">#&gt; ||    Successfully assigned alignments : 50 (100.0%)                          ||</span></span>
+<span><span class="co">#&gt; ||    Total alignments : 733                                                  ||</span></span>
+<span><span class="co">#&gt; ||    Successfully assigned alignments : 733 (100.0%)                         ||</span></span>
 <span><span class="co">#&gt; ||    Running time : 0.00 minutes                                             ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; || Process BAM file Sample4.bam...                                            ||</span></span>
 <span><span class="co">#&gt; ||    Single-end reads are included.                                          ||</span></span>
-<span><span class="co">#&gt; ||    Total alignments : 75                                                   ||</span></span>
-<span><span class="co">#&gt; ||    Successfully assigned alignments : 75 (100.0%)                          ||</span></span>
+<span><span class="co">#&gt; ||    Total alignments : 590                                                  ||</span></span>
+<span><span class="co">#&gt; ||    Successfully assigned alignments : 590 (100.0%)                         ||</span></span>
 <span><span class="co">#&gt; ||    Running time : 0.00 minutes                                             ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; || Write the final count table.                                               ||</span></span>
 <span><span class="co">#&gt; || Write the read assignment summary.                                         ||</span></span>
 <span><span class="co">#&gt; ||                                                                            ||</span></span>
 <span><span class="co">#&gt; \\============================================================================//</span></span>
-<span><span class="co">#&gt; Success! Counts written to: ../inst/extdata/test_results/test_raw_counts.txt</span></span></code></pre></div>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; Success! Counts written to: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_raw_counts.txt</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">file_counts</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;             GeneID  Chr Start   End Strand Length Sample1.bam Sample2.bam</span></span>
-<span><span class="co">#&gt; 1      chr1_1_5000 chr1     1  5000      .   5000          35          67</span></span>
-<span><span class="co">#&gt; 2  chr1_5001_10000 chr1  5001 10000      .   5000          15           8</span></span>
-<span><span class="co">#&gt; 3 chr1_10001_15000 chr1 10001 15000      .   5000           0           0</span></span>
-<span><span class="co">#&gt; 4 chr1_15001_20000 chr1 15001 20000      .   5000           0           0</span></span>
-<span><span class="co">#&gt; 5 chr1_20001_25000 chr1 20001 25000      .   5000           0           0</span></span>
-<span><span class="co">#&gt; 6 chr1_25001_30000 chr1 25001 30000      .   5000           0           0</span></span>
+<span><span class="co">#&gt; 1      chr1_1_5000 chr1     1  5000      .   5000          82          64</span></span>
+<span><span class="co">#&gt; 2  chr1_5001_10000 chr1  5001 10000      .   5000          89          51</span></span>
+<span><span class="co">#&gt; 3 chr1_10001_15000 chr1 10001 15000      .   5000          56          41</span></span>
+<span><span class="co">#&gt; 4 chr1_15001_20000 chr1 15001 20000      .   5000          10          83</span></span>
+<span><span class="co">#&gt; 5 chr1_20001_25000 chr1 20001 25000      .   5000          19          52</span></span>
+<span><span class="co">#&gt; 6 chr1_25001_30000 chr1 25001 30000      .   5000          60          33</span></span>
 <span><span class="co">#&gt;   Sample3.bam Sample4.bam</span></span>
-<span><span class="co">#&gt; 1          35          67</span></span>
-<span><span class="co">#&gt; 2          15           8</span></span>
-<span><span class="co">#&gt; 3           0           0</span></span>
-<span><span class="co">#&gt; 4           0           0</span></span>
-<span><span class="co">#&gt; 5           0           0</span></span>
-<span><span class="co">#&gt; 6           0           0</span></span></code></pre></div>
+<span><span class="co">#&gt; 1          41          78</span></span>
+<span><span class="co">#&gt; 2          86          36</span></span>
+<span><span class="co">#&gt; 3          73          84</span></span>
+<span><span class="co">#&gt; 4          63          30</span></span>
+<span><span class="co">#&gt; 5          36          88</span></span>
+<span><span class="co">#&gt; 6          48          40</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="step-3-preprocess">Step 3: Preprocess<a class="anchor" aria-label="anchor" href="#step-3-preprocess"></a>
@@ -803,9 +873,9 @@ segments by average intensity.</li>
 <li>
 <strong>RankNorm:</strong> Inverse Normal Transform per sample.</li>
 </ul>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">file_pheno</span> <span class="op">&lt;-</span> <span class="st">"../inst/extdata/test_results/test_pheno_norm.txt"</span></span>
-<span><span class="va">file_pheno_meta</span> <span class="op">&lt;-</span> <span class="st">"../inst/extdata/test_results/test_pheno_norm_meta.txt"</span></span>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">file_pheno</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out_dir</span>, <span class="st">"test_pheno_norm.txt"</span><span class="op">)</span></span>
+<span><span class="va">file_pheno_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out_dir</span>, <span class="st">"test_pheno_norm_meta.txt"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/cacti_s_preprocess.html">cacti_s_preprocess</a></span><span class="op">(</span></span>
 <span>  file_raw_counts <span class="op">=</span> <span class="va">file_counts</span>, <span class="co"># Path to featureCounts output (from \code{cacti_s_count}).</span></span>
@@ -816,36 +886,44 @@ segments by average intensity.</li>
 <span>  min_prop <span class="op">=</span> <span class="fl">0.2</span> <span class="co"># (For "cpm_threshold") Minimum proportion of samples (default 0.2).</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; === Starting Preprocessing ===</span></span>
-<span><span class="co">#&gt;   Input: ../inst/extdata/test_results/test_raw_counts.txt</span></span>
+<span><span class="co">#&gt;   Input: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_raw_counts.txt</span></span>
 <span><span class="co">#&gt;   Filter Mode: cpm_threshold</span></span>
 <span><span class="co">#&gt;   Cleaned sample names: Sample1, Sample2, Sample3...</span></span>
 <span><span class="co">#&gt;   Initial Features: 576216</span></span>
 <span><span class="co">#&gt;   Initial Samples:  4</span></span>
-<span><span class="co">#&gt;   Features after removing all-zeros: 2</span></span>
+<span><span class="co">#&gt;   Features after removing all-zeros: 12</span></span>
 <span><span class="co">#&gt;   Filtering by intensity: CPM &gt; 1 in &gt; 20% samples</span></span>
-<span><span class="co">#&gt;   Features kept: 2</span></span>
+<span><span class="co">#&gt;   Features kept: 12</span></span>
 <span><span class="co">#&gt;   Standardizing (Z-score per feature)...</span></span>
 <span><span class="co">#&gt;   Rank Normalizing (INT per sample)...</span></span>
-<span><span class="co">#&gt; Success! Processed data written to: ../inst/extdata/test_results/test_pheno_norm.txt</span></span>
-<span><span class="co">#&gt; Success! Processed data meta written to: ../inst/extdata/test_results/test_pheno_norm_meta.txt</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">file_pheno</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            GeneID    Sample1    Sample2    Sample3    Sample4</span></span>
-<span><span class="co">#&gt; 1     chr1_1_5000 -0.6744898  0.6744898 -0.6744898  0.6744898</span></span>
-<span><span class="co">#&gt; 2 chr1_5001_10000  0.6744898 -0.6744898  0.6744898 -0.6744898</span></span></code></pre></div>
+<span><span class="co">#&gt; Success! Processed data written to: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_pheno_norm.txt</span></span>
+<span><span class="co">#&gt; Success! Processed data meta written to: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_pheno_norm_meta.txt</span></span></code></pre></div>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">file_pheno</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;             GeneID    Sample1    Sample2    Sample3    Sample4</span></span>
+<span><span class="co">#&gt; 1      chr1_1_5000 -0.1046335 -0.1046335 -1.7316644  0.8122178</span></span>
+<span><span class="co">#&gt; 2  chr1_5001_10000  0.5485223 -0.5485223  1.1503494 -0.5485223</span></span>
+<span><span class="co">#&gt; 3 chr1_10001_15000 -0.5485223 -1.1503494  0.3186394  1.7316644</span></span>
+<span><span class="co">#&gt; 4 chr1_15001_20000 -1.1503494  1.1503494  0.5485223 -0.1046335</span></span>
+<span><span class="co">#&gt; 5 chr1_20001_25000 -0.8122178  0.3186394 -0.8122178  1.1503494</span></span>
+<span><span class="co">#&gt; 6 chr1_25001_30000  1.1503494 -1.7316644 -0.3186394  0.1046335</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">file_pheno_meta</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            GeneID  Chr Start   End</span></span>
-<span><span class="co">#&gt; 1     chr1_1_5000 chr1     1  5000</span></span>
-<span><span class="co">#&gt; 2 chr1_5001_10000 chr1  5001 10000</span></span></code></pre></div>
+<span><span class="co">#&gt;             GeneID  Chr Start   End</span></span>
+<span><span class="co">#&gt; 1      chr1_1_5000 chr1     1  5000</span></span>
+<span><span class="co">#&gt; 2  chr1_5001_10000 chr1  5001 10000</span></span>
+<span><span class="co">#&gt; 3 chr1_10001_15000 chr1 10001 15000</span></span>
+<span><span class="co">#&gt; 4 chr1_15001_20000 chr1 15001 20000</span></span>
+<span><span class="co">#&gt; 5 chr1_20001_25000 chr1 20001 25000</span></span>
+<span><span class="co">#&gt; 6 chr1_25001_30000 chr1 25001 30000</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="step-4-map-cis-qtls">Step 4: Map Cis-QTLs<a class="anchor" aria-label="anchor" href="#step-4-map-cis-qtls"></a>
 </h3>
 <p>Finally, we run the cis-QTL mapping using the normalized phenotype
 matrix using <code>MatrixEQTL</code>.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">file_qtl</span> <span class="op">&lt;-</span> <span class="st">"../inst/extdata/test_results/test_cis_qtl_stats.txt"</span></span>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">file_qtl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out_dir</span>, <span class="st">"test_cis_qtl_stats.txt"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/cacti_s_map_cis.html">cacti_s_map_cis</a></span><span class="op">(</span></span>
 <span>  file_pheno <span class="op">=</span> <span class="va">file_pheno</span>, <span class="co"># Path to the processed phenotype file (from `cacti_s_preprocess`).</span></span>
@@ -861,57 +939,60 @@ matrix using <code>MatrixEQTL</code>.</p>
 <span><span class="co">#&gt; Converting VCF to genotype matrix...</span></span>
 <span><span class="co">#&gt; Preparing covariates...</span></span>
 <span><span class="co">#&gt; Rows read: 51 done.</span></span>
-<span><span class="co">#&gt; Rows read: 2 done.</span></span>
+<span><span class="co">#&gt; Rows read: 12 done.</span></span>
 <span><span class="co">#&gt; Rows read: 1 done.</span></span>
 <span><span class="co">#&gt; Running MatrixEQTL...</span></span>
 <span><span class="co">#&gt; Matching data files and location files</span></span>
-<span><span class="co">#&gt; 2 of 2 genes matched</span></span>
+<span><span class="co">#&gt; 12 of 12 genes matched</span></span>
 <span><span class="co">#&gt; 51 of 51 SNPs matched</span></span>
-<span><span class="co">#&gt; Task finished in 0.002 seconds</span></span>
+<span><span class="co">#&gt; Task finished in 0 seconds</span></span>
 <span><span class="co">#&gt; Processing covariates</span></span>
-<span><span class="co">#&gt; Task finished in 0.002 seconds</span></span>
-<span><span class="co">#&gt; Processing gene expression data (imputation, residualization)</span></span>
 <span><span class="co">#&gt; Task finished in 0.001 seconds</span></span>
+<span><span class="co">#&gt; Processing gene expression data (imputation, residualization)</span></span>
+<span><span class="co">#&gt; Task finished in 0 seconds</span></span>
 <span><span class="co">#&gt; Creating output file(s)</span></span>
-<span><span class="co">#&gt; Task finished in 0.004 seconds</span></span>
+<span><span class="co">#&gt; Task finished in 0.002 seconds</span></span>
 <span><span class="co">#&gt; Performing eQTL analysis</span></span>
-<span><span class="co">#&gt; 100.00% done, 102 cis-eQTLs</span></span>
-<span><span class="co">#&gt; Task finished in 0.007 seconds</span></span>
+<span><span class="co">#&gt; 100.00% done, 612 cis-eQTLs</span></span>
+<span><span class="co">#&gt; Task finished in 0.005 seconds</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Success! Stats written to: ../inst/extdata/test_results/test_cis_qtl_stats.txt</span></span></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; Success! Stats written to: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_cis_qtl_stats.txt</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">file_qtl</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            phe_id var_id    z          pval</span></span>
-<span><span class="co">#&gt; 1     chr1_1_5000 snp_11  Inf 2.225074e-308</span></span>
-<span><span class="co">#&gt; 2     chr1_1_5000 snp_13  Inf 2.225074e-308</span></span>
-<span><span class="co">#&gt; 3     chr1_1_5000 snp_22 -Inf 2.225074e-308</span></span>
-<span><span class="co">#&gt; 4     chr1_1_5000 snp_33  Inf 2.225074e-308</span></span>
-<span><span class="co">#&gt; 5     chr1_1_5000 snp_44  Inf 2.225074e-308</span></span>
-<span><span class="co">#&gt; 6 chr1_5001_10000 snp_11 -Inf 2.225074e-308</span></span></code></pre></div>
+<span><span class="co">#&gt;             phe_id var_id         z        pval</span></span>
+<span><span class="co">#&gt; 1 chr1_35001_40000  snp_5 -3.183188 0.001456629</span></span>
+<span><span class="co">#&gt; 2 chr1_35001_40000 snp_40  3.183188 0.001456629</span></span>
+<span><span class="co">#&gt; 3 chr1_35001_40000 snp_42 -3.183188 0.001456629</span></span>
+<span><span class="co">#&gt; 4      chr1_1_5000 snp_13  2.700154 0.006930729</span></span>
+<span><span class="co">#&gt; 5      chr1_1_5000 snp_22 -2.700154 0.006930729</span></span>
+<span><span class="co">#&gt; 6      chr1_1_5000 snp_33  2.700154 0.006930729</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
-<h2 id="part-3-run-multivariate-association-with-cacti">Part 3: Run multivariate association with CACTI<a class="anchor" aria-label="anchor" href="#part-3-run-multivariate-association-with-cacti"></a>
+<h2 id="part-4-run-multivariate-association-with-cacti">Part 4: Run multivariate association with CACTI<a class="anchor" aria-label="anchor" href="#part-4-run-multivariate-association-with-cacti"></a>
 </h2>
 <p>The files generated by the CACTI-S pipeline serve as the primary
 inputs for the core CACTI analysis. These include the phenotype metadata
 (<code>file_pheno_meta</code>), normalized phenotypes
 (<code>file_pheno</code>), covariates (<code>file_cov</code>), and the
 QTL summary statistics (<code>file_qtl</code>). For more details, please
-see the vignette <a href="docs/cacti_peak_window.html">here</a>.</p>
+see the vignette <a href="cacti_peak_window.html">here</a>.</p>
 <p>With these inputs ready, we can directly run
 <code><a href="../reference/cacti_run_chr.html">cacti_run_chr()</a></code> (for a single chromosome) or
 <code><a href="../reference/cacti_run_genome.html">cacti_run_genome()</a></code> (for the whole genome).</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">file_pheno</span> <span class="op">&lt;-</span> <span class="st">"../inst/extdata/test_results/test_pheno_norm.txt"</span></span>
-<span><span class="va">file_pheno_meta</span> <span class="op">&lt;-</span> <span class="st">"../inst/extdata/test_results/test_pheno_norm_meta.txt"</span></span>
-<span><span class="va">file_cov</span>   <span class="op">&lt;-</span> <span class="st">"../inst/extdata/test_cov.txt"</span></span>
-<span><span class="va">file_qtl</span> <span class="op">&lt;-</span> <span class="st">"../inst/extdata/test_results/test_cis_qtl_stats.txt"</span></span>
-<span><span class="va">out_prefix</span> <span class="op">&lt;-</span> <span class="st">'../inst/extdata/test_results/cactis_chr1'</span></span>
+<p>For the bundled example, 10-kb windows group adjacent 5-kb segments,
+allowing windows with at least two retained segments to enter the
+multivariate test.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">file_pheno</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out_dir</span>, <span class="st">"test_pheno_norm.txt"</span><span class="op">)</span></span>
+<span><span class="va">file_pheno_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out_dir</span>, <span class="st">"test_pheno_norm_meta.txt"</span><span class="op">)</span></span>
+<span><span class="va">file_cov</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_cov.txt"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
+<span><span class="va">file_qtl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out_dir</span>, <span class="st">"test_cis_qtl_stats.txt"</span><span class="op">)</span></span>
+<span><span class="va">out_prefix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out_dir</span>, <span class="st">"cactis_chr1"</span><span class="op">)</span></span>
 <span><span class="va">chr</span> <span class="op">&lt;-</span> <span class="st">"chr1"</span></span>
 <span></span>
 <span><span class="va">res_single_chr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cacti_run_chr.html">cacti_run_chr</a></span><span class="op">(</span></span>
-<span>  window_size     <span class="op">=</span> <span class="st">"5kb"</span>,</span>
+<span>  window_size     <span class="op">=</span> <span class="st">"10kb"</span>,</span>
 <span>  file_pheno_meta <span class="op">=</span> <span class="va">file_pheno_meta</span>,</span>
 <span>  file_pheno      <span class="op">=</span> <span class="va">file_pheno</span>,</span>
 <span>  file_cov        <span class="op">=</span> <span class="va">file_cov</span>,</span>
@@ -923,13 +1004,15 @@ see the vignette <a href="docs/cacti_peak_window.html">here</a>.</p>
 <span><span class="co">#&gt; =======================================================</span></span>
 <span><span class="co">#&gt;  CACTI Pipeline</span></span>
 <span><span class="co">#&gt; =======================================================</span></span>
-<span><span class="co">#&gt; Output Directory: ../inst/extdata/test_results</span></span>
+<span><span class="co">#&gt; Output Directory: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [Step 1/3] Group peaks into non-overlapping windows …</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [Step 2/3] Residualize phenotype by covariates …</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [Step 3/3] Run pvalue for chr1 …</span></span>
+<span><span class="co">#&gt; Warning in ACAT::ACAT(rbind(p.PCMinP, p.PCFisher, p.PCLC, p.WI, p.Wald, : There</span></span>
+<span><span class="co">#&gt; are p-values that are exactly 1!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; =======================================================</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -938,45 +1021,114 @@ see the vignette <a href="docs/cacti_peak_window.html">here</a>.</p>
 <span><span class="co">#&gt; =======================================================</span></span>
 <span><span class="co">#&gt; ----------- Run summary -----------</span></span>
 <span><span class="co">#&gt; Chromosome:chr1</span></span>
-<span><span class="co">#&gt; Window size:5kb</span></span>
+<span><span class="co">#&gt; Window size:10kb</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  ----------- Input files -----------</span></span>
-<span><span class="co">#&gt; Peaks BED:../inst/extdata/test_results/test_pheno_norm_meta.txt</span></span>
-<span><span class="co">#&gt; Phenotype:../inst/extdata/test_results/test_pheno_norm.txt</span></span>
-<span><span class="co">#&gt; Covariate:../inst/extdata/test_cov.txt</span></span>
-<span><span class="co">#&gt; QTL summary stats:../inst/extdata/test_results/test_cis_qtl_stats.txt</span></span>
+<span><span class="co">#&gt; Peaks BED:/var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_pheno_norm_meta.txt</span></span>
+<span><span class="co">#&gt; Phenotype:/var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_pheno_norm.txt</span></span>
+<span><span class="co">#&gt; Covariate:/private/var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T/RtmpO6YTYF/temp_libpath11ca5d430a3c/cacti/extdata/test_cov.txt</span></span>
+<span><span class="co">#&gt; QTL summary stats:/var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/test_cis_qtl_stats.txt</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  ----------- Output files -----------</span></span>
-<span><span class="co">#&gt;   [1] Grouped peak: ../inst/extdata/test_results/cactis_chr1_peak_group_window5kb.txt</span></span>
-<span><span class="co">#&gt;   [2] Grouped peak (peak as row):../inst/extdata/test_results/cactis_chr1_peak_group_window5kb_peak_as_row.txt</span></span>
-<span><span class="co">#&gt;   [3] Residual phenotype:../inst/extdata/test_results/cactis_chr1_pheno_cov_residual.txt</span></span>
-<span><span class="co">#&gt;   [4] Pval results (chr1): ../inst/extdata/test_results/cactis_chr1_pval_window5kb_chr1.txt.gz</span></span>
+<span><span class="co">#&gt;   [1] Grouped peak: /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/cactis_chr1_peak_group_window10kb.txt</span></span>
+<span><span class="co">#&gt;   [2] Grouped peak (peak as row):/var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/cactis_chr1_peak_group_window10kb_peak_as_row.txt</span></span>
+<span><span class="co">#&gt;   [3] Residual phenotype:/var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/cactis_chr1_pheno_cov_residual.txt</span></span>
+<span><span class="co">#&gt;   [4] Pval results (chr1): /var/folders/p0/bl6jnkv13_s1l9r9qy4dsndc0000gn/T//RtmpLPnDhi/cacti_s_example/cactis_chr1_pval_window10kb_chr1.txt.gz</span></span>
 <span><span class="co">#&gt; =======================================================</span></span></code></pre></div>
 <p>The function returns a list containing the paths to the generated
 files:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res_single_chr</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $file_peak_group</span></span>
-<span><span class="co">#&gt; [1] "../inst/extdata/test_results/cactis_chr1_peak_group_window5kb.txt"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $file_peak_group_peaklevel</span></span>
-<span><span class="co">#&gt; [1] "../inst/extdata/test_results/cactis_chr1_peak_group_window5kb_peak_as_row.txt"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $file_pheno_cov_residual</span></span>
-<span><span class="co">#&gt; [1] "../inst/extdata/test_results/cactis_chr1_pheno_cov_residual.txt"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $file_p_peak_group</span></span>
-<span><span class="co">#&gt; [1] "../inst/extdata/test_results/cactis_chr1_pval_window5kb_chr1.txt.gz"</span></span></code></pre></div>
-<p>Below is a preview of the final association statistics:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">res_single_chr</span><span class="op">$</span><span class="va">file_p_peak_group</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   group    snp pval</span></span>
-<span><span class="co">#&gt; 1    G1 snp_11    0</span></span>
-<span><span class="co">#&gt; 2    G1 snp_13    0</span></span>
-<span><span class="co">#&gt; 3    G1 snp_22    0</span></span>
-<span><span class="co">#&gt; 4    G1 snp_33    0</span></span>
-<span><span class="co">#&gt; 5    G1 snp_44    0</span></span>
-<span><span class="co">#&gt; 6    G1  snp_8    0</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">res_single_chr</span><span class="op">)</span>, Filename <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">res_single_chr</span><span class="op">)</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="34%">
+<col width="65%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Output</th>
+<th align="left">Filename</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">file_peak_group</td>
+<td align="left">cactis_chr1_peak_group_window10kb.txt</td>
+</tr>
+<tr class="even">
+<td align="left">file_peak_group_peaklevel</td>
+<td align="left">cactis_chr1_peak_group_window10kb_peak_as_row.txt</td>
+</tr>
+<tr class="odd">
+<td align="left">file_pheno_cov_residual</td>
+<td align="left">cactis_chr1_pheno_cov_residual.txt</td>
+</tr>
+<tr class="even">
+<td align="left">file_p_peak_group</td>
+<td align="left">cactis_chr1_pval_window10kb_chr1.txt.gz</td>
+</tr>
+</tbody>
+</table>
+<p>Below is a preview of the final association statistics:</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">window_results</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="va">res_single_chr</span><span class="op">$</span><span class="va">file_p_peak_group</span>, data.table <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">window_preview</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">window_results</span>, <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="va">window_preview</span><span class="op">$</span><span class="va">pval</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/formatc.html" class="external-link">formatC</a></span><span class="op">(</span><span class="va">window_preview</span><span class="op">$</span><span class="va">pval</span>, format <span class="op">=</span> <span class="st">"e"</span>, digits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">window_preview</span>, caption <span class="op">=</span> <span class="st">"First five SNP-window associations"</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>First five SNP-window associations</caption>
+<thead><tr class="header">
+<th align="left">group</th>
+<th align="left">snp</th>
+<th align="left">pval</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">G1</td>
+<td align="left">snp_13</td>
+<td align="left">3.056e-02</td>
+</tr>
+<tr class="even">
+<td align="left">G1</td>
+<td align="left">snp_22</td>
+<td align="left">3.056e-02</td>
+</tr>
+<tr class="odd">
+<td align="left">G1</td>
+<td align="left">snp_33</td>
+<td align="left">3.056e-02</td>
+</tr>
+<tr class="even">
+<td align="left">G1</td>
+<td align="left">snp_44</td>
+<td align="left">3.056e-02</td>
+</tr>
+<tr class="odd">
+<td align="left">G1</td>
+<td align="left">snp_11</td>
+<td align="left">3.056e-02</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  Output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Tested windows"</span>, <span class="st">"SNP-window associations"</span><span class="op">)</span>,</span>
+<span>  Number <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">window_results</span><span class="op">$</span><span class="va">group</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">window_results</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Output</th>
+<th align="right">Number</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Tested windows</td>
+<td align="right">6</td>
+</tr>
+<tr class="even">
+<td align="left">SNP-window associations</td>
+<td align="right">306</td>
+</tr>
+</tbody>
+</table>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -985,11 +1137,11 @@ files:</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Lili Wang, Zining Qi and Xuanyao Liu.</p>
+
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

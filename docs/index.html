@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin QTL Detection • cacti</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="CACTI: Leveraging Correlated Regulatory Elements for Powerful Chromatin QTL Detection">
 <meta name="description" content="Implements the CACTI peak-window method for multi-peak chromatin QTL mapping.">
@@ -39,7 +39,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/liliw-w/cacti/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/XuanyaoLiuLab/cacti/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -53,38 +53,122 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p><img src="reference/figures/cacti_overview.png" width="2055"></p>
-<p>CACTI (<strong>C</strong>hrom<strong>A</strong>tin quantitative lo<strong>C</strong>i of mul<strong>TI</strong>ple peaks) implements a powerful method for chromatin QTL mapping that leverages the correlation structure of nearby regulatory elements.</p>
+<p><img src="reference/figures/cacti_overview.png" width="2055" alt="Overview of the CACTI chromatin QTL mapping workflow"></p>
+<p>CACTI implements a powerful method for chromatin QTL mapping that leverages the correlation structure of nearby regulatory elements.</p>
 <p>The package offers two main modules:</p>
 <ol style="list-style-type: decimal">
-<li><strong>CACTI (Peak-window method):</strong></li>
+<li><strong>CACTI (Peak-based pipeline):</strong></li>
 </ol>
 <ul>
-<li>Groups pre-defined peaks into non-overlapping windows of fixed genomic size.</li>
-<li>Residualizes peak intensities with respect to covariates.</li>
-<li>Runs multi-peak association tests using a principal-component omnibus (PCO) test.</li>
-<li>Aggregates results and computes window-level FDR.</li>
+<li>Suitable for chromatin features with narrow peak signatures (H3k27ac, H3k4me1, ATAC-seq, etc)</li>
+<li>Peak calling should be performed before applying CACTI.</li>
+<li>Takes standard input in standard QTL calling tools: genotype, phenotype (called peaks) and covariates</li>
+<li>A summary statistics-based option is available too</li>
 </ul>
 <ol start="2" style="list-style-type: decimal">
-<li><strong>CACTI-S (Sample-based pipeline):</strong></li>
+<li><strong>CACTI-S (Segment-based pipeline):</strong></li>
 </ol>
 <ul>
-<li>An end-to-end preprocessing workflow to go from raw BAM files to normalized phenotype matrices to QTL mapping.</li>
+<li>Suitable for chromatin features with broad peak signatures (H3K27me3, H3K36me3, etc)</li>
+<li>Skips peak calling, an end-to-end preprocessing workflow to go from raw BAM files to normalized phenotype matrices to QTL mapping.</li>
 <li>Performs segmentation, read counting, QC/filtering, and normalization.</li>
-<li>Runs cis-QTL mapping to generate input files for CACTI.</li>
 </ul>
 <hr>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
+<p>Use a current R release. CACTI requires R &gt;= 4.1.0; its dependencies may require newer R. Check your version with <code>R.version.string</code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span>   <span class="co"># if not installed yet</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"liliw-w/cacti"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"remotes"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span>, repos <span class="op">=</span> <span class="st">"https://cloud.r-project.org"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, repos <span class="op">=</span> <span class="st">"https://cloud.r-project.org"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>repos <span class="op">=</span> <span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/repositories.html" class="external-link">repositories</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"XuanyaoLiuLab/cacti"</span>, build_vignettes <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p>Required CRAN and Bioconductor packages are installed automatically.</p>
 <p>After installation:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/liliw-w/cacti" class="external-link">cacti</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/XuanyaoLiuLab/cacti" class="external-link">cacti</a></span><span class="op">)</span></span></code></pre></div>
 <hr>
+</div>
+<div class="section level2">
+<h2 id="getting-started-in-5-minutes">Getting Started in 5 Minutes<a class="anchor" aria-label="anchor" href="#getting-started-in-5-minutes"></a>
+</h2>
+<div class="section level3">
+<h3 id="id_1-run-cacti-peak-window-genome-wide-default">1) Run CACTI peak-window (genome-wide default)<a class="anchor" aria-label="anchor" href="#id_1-run-cacti-peak-window-genome-wide-default"></a>
+</h3>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/XuanyaoLiuLab/cacti" class="external-link">cacti</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">file_pheno_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_cacti_peak_chr5_pheno_meta.bed"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
+<span><span class="va">file_pheno</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_cacti_peak_chr5_pheno.txt"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
+<span><span class="va">file_cov</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_cacti_peak_chr5_covariates.txt"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
+<span><span class="va">file_vcf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_cacti_peak_chr5_geno.vcf"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
+<span><span class="va">qtl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_cacti_peak_chr5_matrixqtl_sumstats.txt.gz"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cacti_peak_window.html">cacti_peak_window</a></span><span class="op">(</span></span>
+<span>  window_size <span class="op">=</span> <span class="st">"50kb"</span>, <span class="co"># window size to group peaks</span></span>
+<span>  file_pheno_meta <span class="op">=</span> <span class="va">file_pheno_meta</span>,</span>
+<span>  file_pheno <span class="op">=</span> <span class="va">file_pheno</span>,</span>
+<span>  file_cov <span class="op">=</span> <span class="va">file_cov</span>,</span>
+<span>  file_vcf <span class="op">=</span> <span class="va">file_vcf</span>,</span>
+<span>  chr <span class="op">=</span> <span class="st">"All"</span>,      <span class="co"># default: run all chromosomes in file_pheno_meta</span></span>
+<span>  do_fdr <span class="op">=</span> <span class="cn">TRUE</span>,    <span class="co"># default: add FDR correction</span></span>
+<span>  out_prefix <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"cacti_quickstart_"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">res</span><span class="op">$</span><span class="va">file_fdr_out</span></span>
+<span></span>
+<span><span class="co"># Optional summary-stats mode</span></span>
+<span><span class="va">res_qtl</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cacti_peak_window.html">cacti_peak_window</a></span><span class="op">(</span></span>
+<span>  window_size <span class="op">=</span> <span class="st">"50kb"</span>,</span>
+<span>  file_pheno_meta <span class="op">=</span> <span class="va">file_pheno_meta</span>,</span>
+<span>  file_pheno <span class="op">=</span> <span class="va">file_pheno</span>,</span>
+<span>  file_cov <span class="op">=</span> <span class="va">file_cov</span>,</span>
+<span>  qtl_file <span class="op">=</span> <span class="va">qtl_file</span>,</span>
+<span>  chr <span class="op">=</span> <span class="st">"chr5"</span>,</span>
+<span>  do_fdr <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  out_prefix <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"cacti_quickstart_qtl_"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">res_qtl</span><span class="op">$</span><span class="va">file_fdr_out</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="id_2-run-cacti-s-prep-raw-bam-to-cis-qtl-summary-stats">2) Run CACTI-S prep (raw BAM to cis-QTL summary stats)<a class="anchor" aria-label="anchor" href="#id_2-run-cacti-s-prep-raw-bam-to-cis-qtl-summary-stats"></a>
+</h3>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/XuanyaoLiuLab/cacti" class="external-link">cacti</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">file_bams</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Sample1.bam"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Sample2.bam"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Sample3.bam"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Sample4.bam"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">file_vcf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_geno.vcf"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
+<span><span class="va">file_cov</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_cov.txt"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">res_s</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cacti_s_prep.html">cacti_s_prep</a></span><span class="op">(</span></span>
+<span>  file_bams <span class="op">=</span> <span class="va">file_bams</span>,</span>
+<span>  file_vcf <span class="op">=</span> <span class="va">file_vcf</span>,</span>
+<span>  file_cov <span class="op">=</span> <span class="va">file_cov</span>,</span>
+<span>  out_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  out_prefix <span class="op">=</span> <span class="st">"cacti_s_quickstart"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">res_s</span></span></code></pre></div>
+<p>Notes:</p>
+<ul>
+<li>Input conventions are standard QTL inputs: genotype, phenotype, and covariates with matched sample IDs.</li>
+<li>
+<code><a href="reference/cacti_peak_window.html">cacti_peak_window()</a></code> also supports summary-statistics mode via <code>qtl_file</code>/<code>qtl_files</code>.</li>
+</ul>
+<p>The bundled synthetic data demonstrate the workflows; they do not evaluate statistical power, calibration, or biological validity.</p>
+<hr>
+</div>
 </div>
 <div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
@@ -92,20 +176,29 @@
 <div class="section level3">
 <h3 id="vignettes">Vignettes<a class="anchor" aria-label="anchor" href="#vignettes"></a>
 </h3>
-<p>See the <a href="https://liliw-w.github.io/cacti/">full documentation and vignettes</a> for -</p>
+<p>See the <a href="https://xuanyaoliulab.github.io/cacti/">full documentation and vignettes</a> for -</p>
 <ul>
 <li><p>CACTI Peak-Window Pipeline</p></li>
 <li><p>CACTI-S Pipeline</p></li>
 </ul>
-<p>Vignettes can also be viewed within the installed package -</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<p>The installation above skips vignette building; use the online documentation. To also install local vignettes, first install <a href="https://pandoc.org/installing.html" class="external-link">Pandoc</a>, then run:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>repos <span class="op">=</span> <span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/repositories.html" class="external-link">repositories</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span></span>
+<span>  <span class="st">"XuanyaoLiuLab/cacti"</span>,</span>
+<span>  dependencies <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  build_vignettes <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  force <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>After installation with vignettes:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"cacti_peak_window"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"cacti_s_prep"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="main-functions-documentation">Main functions documentation<a class="anchor" aria-label="anchor" href="#main-functions-documentation"></a>
 </h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">?</span><span class="va">cacti_run_chr</span></span>
 <span><span class="op">?</span><span class="va">cacti_run_genome</span></span>
 <span><span class="op">?</span><span class="va">cacti_add_fdr</span></span>
@@ -116,6 +209,7 @@
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
+<p>The CACTI method was developed by Lili Wang <a href="https://x.com/liliw_wang" class="external-link uri">https://x.com/liliw_wang</a>.</p>
 <p>If you use the CACTI method, please cite:</p>
 <blockquote>
 <p>Wang, L., &amp; Liu, X. (2025). Improved chromatin QTL mapping with CACTI. bioRxiv, 2025-06.</p>
@@ -125,8 +219,8 @@
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/liliw-w/cacti/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/liliw-w/cacti/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/XuanyaoLiuLab/cacti/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/XuanyaoLiuLab/cacti/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -150,9 +244,11 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Lili Wang <br><small class="roles"> Author, maintainer </small>   </li>
-<li>Zining Qi <br><small class="roles"> Author </small>   </li>
-<li>Xuanyao Liu <br><small class="roles"> Author </small>   </li>
+<li>
+<p>Lili Wang<br><small class="roles">Author</small></p>
+<p>Zining Qi<br><small class="roles">Contributor</small></p>
+<p>Xuanyao Liu<br><small class="roles">Contributor</small></p>
+</li>
 </ul>
 </div>
 
@@ -163,11 +259,11 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Lili Wang, Zining Qi and Xuanyao Liu.</p>
+
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

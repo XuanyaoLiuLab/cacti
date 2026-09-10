@@ -40,6 +40,7 @@ Invisibly returns the summary stats.
 }
 \description{
 Performs linear regression using MatrixEQTL to generate summary statistics.
+The output includes signed Z-scores (\code{z}) and P values (\code{pval}).
 }
 \examples{
 \dontrun{

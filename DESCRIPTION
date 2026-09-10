@@ -4,37 +4,42 @@ Version: 0.0.0.9000
 Authors@R: 
     c(
       person("Lili", "Wang", , "liliw1@uchicago.edu", role = c("aut", "cre")),
-      person("Zining", "Qi", role = "aut"),
-      person("Xuanyao", "Liu", role = "aut")
+      person("Zining", "Qi", role = "ctb"),
+      person("Xuanyao", "Liu", role = "ctb")
     )
 Description: Implements the CACTI peak-window method for multi-peak
     chromatin QTL mapping.
-URL: https://github.com/liliw-w/cacti, https://liliw-w.github.io/cacti
-BugReports: https://github.com/liliw-w/cacti/issues
+URL: https://github.com/XuanyaoLiuLab/cacti, https://xuanyaoliulab.github.io/cacti/
+BugReports: https://github.com/XuanyaoLiuLab/cacti/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.1.0)
 Imports: 
     ACAT,
+    BiocGenerics,
+    CompQuadForm,
     data.table,
     dplyr,
+    edgeR,
+    GenomeInfoDb,
+    MatrixEQTL,
     qvalue,
+    R.utils (>= 2.13.0),
     readr,
+    Rsubread,
+    snpStats,
     stringr,
+    SummarizedExperiment,
     tibble,
     tidyr,
-    Rsubread,
-    MatrixEQTL
+    VariantAnnotation
 Suggests: 
     knitr,
-    rmarkdown,
-    VariantAnnotation,
-    snpStats,
-    SummarizedExperiment,
-    GenomeInfoDb,
-    BiocGenerics,
-    edgeR,
-    CompQuadForm
+    rmarkdown
+Remotes:
+    yaowuliu/ACAT
 VignetteBuilder: knitr

@@ -10,8 +10,20 @@ vignette: >
 ```{r, include=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  error = FALSE,
+  cache = FALSE
 )
+# Display each distinct warning once; leave all computations and errors unchanged.
+warning_hook <- knitr::knit_hooks$get("warning")
+shown_warnings <- character()
+knitr::knit_hooks$set(warning = function(x, options) {
+  x <- unique(x)
+  x <- x[!x %in% shown_warnings]
+  if (!length(x)) return("")
+  shown_warnings <<- c(shown_warnings, x)
+  warning_hook(x, options)
+})
 library(cacti)
 ```
 
@@ -22,7 +34,7 @@ The **CACTI-S (Segment-based)** pipeline is designed to process raw sequencing d
 -   **Segmentation**: Tile the genome into fixed-size segments (e.g., 1kb, 5kb).
 -   **Reads counting**: Count reads from raw BAM files into these segments.
 -   **Preprocessing**: Perform quality control and normalization.
--   **Mapping**: Run cis-QTL mapping of the segments using `MatrixEQTL` to generate summary statistics required the multivariate CACTI model.
+-   **Mapping**: Run cis-QTL mapping of the segments using `MatrixEQTL` to generate summary statistics required by the multivariate CACTI model.
 
 This vignette explains:
 
@@ -67,9 +79,9 @@ The CACTI-S pipeline has three main steps:
 
 -   Input: Normalized phenotype matrix, genotype data (VCF), and covariates.
 
--   Process: Runs \`MatrixEQTL for every variant–segment pair within a defined cis window (e.g., 100kb).
+-   Process: Runs MatrixEQTL for every variant–segment pair within a defined cis window (e.g., 100kb).
 
--   Output: Cis-QTL summary statistics (Z-scores), which serve as the primary input for the CACTI multivariate test.
+-   Output: Cis-QTL summary statistics (signed association statistics), which serve as the primary input for the CACTI multivariate test.
 
 ## Part 2: Quick start
 
@@ -77,7 +89,9 @@ For most users, the `cacti_s_prep()` function is the most convenient way to run 
 
 ### 1. Locate test data
 
-We will use the small test files bundled with the `cacti` package. In a real analysis, these would be your actual BAM and VCF paths.
+We will use the small test files bundled with the `cacti` package. The four BAM files contain distinct count profiles across twelve 5-kb segments. These synthetic data demonstrate execution, not statistical power or biological validity. In a real analysis, replace these with your own BAM and VCF paths.
+
+Identical warnings are displayed only once on this page. The generated association statistics and P values are checked to be finite.
 
 ```{r}
 # Locate the 4 test BAM files
@@ -87,7 +101,7 @@ bam_files <- list.files(
   full.names = TRUE
 )
 
-# Locate Genotype (VCF), Covariate, and Peak files
+# Locate genotype and covariate files
 file_vcf   <- system.file("extdata", "test_geno.vcf", package = "cacti")
 file_cov   <- system.file("extdata", "test_cov.txt", package = "cacti")
 
@@ -103,12 +117,13 @@ We will run the pipeline with the following settings:
 -   **Filter Mode**: `cpm_threshold` (keep segments with peak intensity CPM \> 1 in \> 20% of samples)
 
 ```{r}
+out_dir <- file.path(tempdir(), "cacti_s_example")
 res <- cacti_s_prep(
   file_bams = bam_files,
   file_vcf = file_vcf,
   file_cov = file_cov,
   
-  out_dir = "../inst/extdata/test_results",
+  out_dir = out_dir,
   out_prefix = "test",
 
   # Pipeline Parameters
@@ -125,10 +140,10 @@ res <- cacti_s_prep(
 
 ### 3. Explore results
 
-The function returns a list of paths to the generated files.
+The function returns a list of paths to the generated files. Outputs are written to a temporary directory in this example; use a directory of your choice to keep them. The table below shows the filenames.
 
 ```{r}
-print(res)
+knitr::kable(data.frame(Output = names(res), Filename = basename(unlist(res)), row.names = NULL))
 ```
 
 #### Segments
@@ -145,28 +160,45 @@ knitr::kable(saf, caption = "Segment position (Top 5 Rows)")
 This file contains raw counts within the segments.
 
 ```{r}
-raw_counts <- read.table(res$raw_counts, header = TRUE, nrows = 5)
+raw_counts <- data.table::fread(res$raw_counts, nrows = 5, data.table = FALSE)
+names(raw_counts)[7:ncol(raw_counts)] <- basename(names(raw_counts)[7:ncol(raw_counts)])
 knitr::kable(raw_counts, caption = "Raw counts within segments (Top 5 Rows)")
 ```
 
 #### Normalized phenotype matrix
 
-This file contains the filtered and normalized data with the segments positions data, ready for downstream analysis e.g. QTL mapping.
+This file contains filtered and normalized phenotypes, with segments in rows and samples in columns. Segment positions are stored in the separate metadata file.
 
 ```{r}
 pheno <- read.table(res$pheno, header = TRUE)
-knitr::kable(pheno, caption = "Normalized phenotype matrix (Top Rows)")
+knitr::kable(head(pheno, 5), digits = 3, caption = "First five normalized segment phenotypes")
 ```
 
 #### Cis-QTL summary statistics
 
-This file contains the cis-QTL mapping associations of individual segments.
+This file contains the cis-QTL mapping associations of individual segments, with signed Z-scores (`z`) and P values (`pval`).
 
 ```{r}
 if (!is.null(res$qtl_stats)) {
-  qtl <- read.table(res$qtl_stats, header = TRUE, nrows = 5)
-  knitr::kable(qtl, caption = "Cis-QTL summary statistics (Top 5 hits)")
+  qtl <- data.table::fread(res$qtl_stats, data.table = FALSE)
+  qtl_preview <- head(qtl, 5)
+  qtl_preview$pval <- formatC(qtl_preview$pval, format = "e", digits = 3)
+  knitr::kable(qtl_preview, digits = 3, caption = "First five SNP-segment associations")
 }
+```
+
+```{r prep-summary}
+knitr::kable(data.frame(
+  Output = c("Retained segments", "SNP-segment associations"),
+  Number = c(nrow(pheno), nrow(qtl))
+))
+```
+
+```{r check-preparation, include=FALSE}
+stopifnot(nrow(pheno) > 0, nrow(qtl) > 0,
+          all(is.finite(as.matrix(pheno[-1]))), all(is.finite(qtl$z)),
+          all(is.finite(qtl$pval)), all(qtl$pval >= 0 & qtl$pval <= 1),
+          max(abs(2 * pnorm(-abs(qtl$z)) - qtl$pval)) < 1e-12)
 ```
 
 ## Part 3: Step-by-step workflow
@@ -178,7 +210,7 @@ If you need more control (e.g., inspecting intermediate files) or customization,
 First, we generate a SAF (Simplified Annotation Format) file that defines the genomic segments.
 
 ```{r}
-file_saf <- "../inst/extdata/test_results/test_segments.txt"
+file_saf <- file.path(out_dir, "test_segments.saf")
 
 cacti_s_create_segments(
   file_saf_out = file_saf, # Output path for the SAF file.
@@ -196,7 +228,7 @@ head(read.table(file_saf, header = TRUE))
 Next, we quantify reads falling into these segments for all BAM files.
 
 ```{r}
-file_counts <- "../inst/extdata/test_results/test_raw_counts.txt"
+file_counts <- file.path(out_dir, "test_raw_counts.txt")
 
 cacti_s_count(
   file_bams = bam_files, # Character vector of BAM file paths.
@@ -223,8 +255,8 @@ We then perform preprocessing steps on the count data, including -
 -   **RankNorm:** Inverse Normal Transform per sample.
 
 ```{r}
-file_pheno <- "../inst/extdata/test_results/test_pheno_norm.txt"
-file_pheno_meta <- "../inst/extdata/test_results/test_pheno_norm_meta.txt"
+file_pheno <- file.path(out_dir, "test_pheno_norm.txt")
+file_pheno_meta <- file.path(out_dir, "test_pheno_norm_meta.txt")
 
 cacti_s_preprocess(
   file_raw_counts = file_counts, # Path to featureCounts output (from \code{cacti_s_count}).
@@ -249,7 +281,7 @@ head(read.table(file_pheno_meta, header = TRUE))
 Finally, we run the cis-QTL mapping using the normalized phenotype matrix using `MatrixEQTL`.
 
 ```{r}
-file_qtl <- "../inst/extdata/test_results/test_cis_qtl_stats.txt"
+file_qtl <- file.path(out_dir, "test_cis_qtl_stats.txt")
 
 cacti_s_map_cis(
   file_pheno = file_pheno, # Path to the processed phenotype file (from `cacti_s_preprocess`).
@@ -266,22 +298,24 @@ cacti_s_map_cis(
 head(read.table(file_qtl, header = TRUE))
 ```
 
-## Part 3: Run multivariate association with CACTI
+## Part 4: Run multivariate association with CACTI
 
-The files generated by the CACTI-S pipeline serve as the primary inputs for the core CACTI analysis. These include the phenotype metadata (`file_pheno_meta`), normalized phenotypes (`file_pheno`), covariates (`file_cov`), and the QTL summary statistics (`file_qtl`). For more details, please see the vignette [here](docs/cacti_peak_window.html).
+The files generated by the CACTI-S pipeline serve as the primary inputs for the core CACTI analysis. These include the phenotype metadata (`file_pheno_meta`), normalized phenotypes (`file_pheno`), covariates (`file_cov`), and the QTL summary statistics (`file_qtl`). For more details, please see the vignette [here](cacti_peak_window.html).
 
 With these inputs ready, we can directly run `cacti_run_chr()` (for a single chromosome) or `cacti_run_genome()` (for the whole genome).
 
+For the bundled example, 10-kb windows group adjacent 5-kb segments, allowing windows with at least two retained segments to enter the multivariate test.
+
 ```{r}
-file_pheno <- "../inst/extdata/test_results/test_pheno_norm.txt"
-file_pheno_meta <- "../inst/extdata/test_results/test_pheno_norm_meta.txt"
-file_cov   <- "../inst/extdata/test_cov.txt"
-file_qtl <- "../inst/extdata/test_results/test_cis_qtl_stats.txt"
-out_prefix <- '../inst/extdata/test_results/cactis_chr1'
+file_pheno <- file.path(out_dir, "test_pheno_norm.txt")
+file_pheno_meta <- file.path(out_dir, "test_pheno_norm_meta.txt")
+file_cov <- system.file("extdata", "test_cov.txt", package = "cacti")
+file_qtl <- file.path(out_dir, "test_cis_qtl_stats.txt")
+out_prefix <- file.path(out_dir, "cactis_chr1")
 chr <- "chr1"
 
 res_single_chr <- cacti_run_chr(
-  window_size     = "5kb",
+  window_size     = "10kb",
   file_pheno_meta = file_pheno_meta,
   file_pheno      = file_pheno,
   file_cov        = file_cov,
@@ -295,11 +329,25 @@ res_single_chr <- cacti_run_chr(
 The function returns a list containing the paths to the generated files:
 
 ```{r}
-print(res_single_chr)
+knitr::kable(data.frame(Output = names(res_single_chr), Filename = basename(unlist(res_single_chr)), row.names = NULL))
 ```
 
 Below is a preview of the final association statistics:
 
 ```{r}
-head(read.table(res_single_chr$file_p_peak_group, header = TRUE))
+window_results <- data.table::fread(res_single_chr$file_p_peak_group, data.table = FALSE)
+window_preview <- head(window_results, 5)
+window_preview$pval <- formatC(window_preview$pval, format = "e", digits = 3)
+knitr::kable(window_preview, caption = "First five SNP-window associations")
+knitr::kable(data.frame(
+  Output = c("Tested windows", "SNP-window associations"),
+  Number = c(length(unique(window_results$group)), nrow(window_results))
+))
+```
+
+```{r check-windows, include=FALSE}
+groups <- data.table::fread(res_single_chr$file_peak_group)
+stopifnot(nrow(window_results) > 0, all(is.finite(window_results$pval)),
+          all(window_results$pval > 0 & window_results$pval <= 1),
+          all(groups$n_pid_group[match(window_results$group, groups$group)] >= 2))
 ```

@@ -1,6 +1,7 @@
 #' Run Nominal Cis-QTL Mapping (CACTI-S)
 #'
 #' Performs linear regression using MatrixEQTL to generate summary statistics.
+#' The output includes signed Z-scores (`z`) and P values (`pval`).
 #'
 #' @param file_pheno Path to the processed phenotype file with position meta and expression data (from `cacti_s_preprocess`).
 #' @param file_pheno_meta Path for the meta file of processed phenotype.
@@ -228,7 +229,11 @@ cacti_s_map_cis <- function(
 
   # --- 5. Format Output ---
   res <- data.table::fread(tmp_out)
-  out_df <- res |> dplyr::select(phe_id = gene, var_id = SNP, z = `t-stat`, pval = `p-value`)
+  out_df <- res |> dplyr::transmute(
+    phe_id = gene, var_id = SNP,
+    z = .cacti_t_to_z(`t-stat`, df = me$param$dfFull),
+    pval = `p-value`
+  )
   data.table::fwrite(out_df, file = file_qtl_out, sep = "\t", quote = FALSE)
 
   # Clean up
@@ -240,4 +245,10 @@ cacti_s_map_cis <- function(
   message("Success! Stats written to: ", file_qtl_out)
 
   invisible(out_df)
+}
+
+# Work in the log tail so very small t-test P values need not be rounded or capped.
+.cacti_t_to_z <- function(t, df) {
+  log_half_p <- stats::pt(-abs(t), df = df, log.p = TRUE)
+  sign(t) * stats::qnorm(log_half_p, lower.tail = FALSE, log.p = TRUE)
 }

@@ -42,4 +42,5 @@ Invisibly returns the summary-statistics data frame.
 Thin wrapper around \code{\link[=cacti_s_map_cis]{cacti_s_map_cis()}} that generates a summary-statistics
 table with columns \code{phe_id}, \code{var_id}, \code{z}, \code{pval} for downstream CACTI
 peak-window testing.
+The \code{z} column contains signed Z-scores.
 }

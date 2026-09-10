@@ -15,14 +15,28 @@ message("Generating test data in: ", out_dir)
 # 1. Generate BAMs
 # -------------------------------------------------------------
 if (requireNamespace("Rsamtools", quietly = TRUE)) {
+  # Twelve genuine 5-kb segments, with a different profile for each sample.
+  # The former duplicated sample pairs and two retained segments produced
+  # exact genotype-phenotype fits after normalization (infinite t-statistics).
+  # This synthetic fixture checks execution, not statistical calibration.
+  saf_df <- data.frame(
+    Start = seq(1L, by = 5000L, length.out = 12L),
+    End = seq(5000L, by = 5000L, length.out = 12L)
+  )
+  set.seed(20260909)
+  toy_counts <- matrix(sample(10:90, 12L * 4L, replace = TRUE), nrow = 12L)
+
   # -------------------------
   create_fake_bam <- function(filename, saf, n_reads_vec) {
-    header <- c("@HD\tVN:1.0\tSO:coordinate", "@SQ\tSN:chr1\tLN:100000")
+    header <- c("@HD\tVN:1.6\tSO:coordinate", "@SQ\tSN:chr1\tLN:100000")
     alignments <- c()
     for (i in 1:nrow(saf)) {
       if (n_reads_vec[i] > 0) {
         for (r in 1:n_reads_vec[i]) {
-          line <- sprintf("read_%d_%d\t0\tchr1\t%d\t255\t50M\t*\t0\t0\t*\t*", i, r, saf$Start[i] + 10)
+          line <- paste(paste0("seg", i, "_read", r), 0, "chr1",
+                        saf$Start[i] + 10L + r, 60, "50M", "*", 0, 0,
+                        paste(rep("A", 50), collapse = ""),
+                        paste(rep("I", 50), collapse = ""), sep = "\t")
           alignments <- c(alignments, line)
         }
       }
@@ -38,19 +52,18 @@ if (requireNamespace("Rsamtools", quietly = TRUE)) {
     writeLines(c(header, alignments), sam_file)
 
     # Convert to BAM
-    Rsamtools::asBam(sam_file, destination = bam_dest, overwrite = TRUE)
+    Rsamtools::asBam(sam_file, destination = bam_dest, overwrite = TRUE, indexDestination = TRUE)
     unlink(sam_file)
   }
 
   # Generate 4 Samples
   # ----------------------
-  # --- FIX: Rename BAMs to match VCF sample IDs (Sample1, Sample2) ---
-  create_fake_bam(file.path(out_dir, "Sample1.bam"), saf_df, c(10, 20, 5, 0, 15))
-  create_fake_bam(file.path(out_dir, "Sample2.bam"), saf_df, c(5, 50, 2, 10, 8))
-  create_fake_bam(file.path(out_dir, "Sample3.bam"), saf_df, c(10, 20, 5, 0, 15))
-  create_fake_bam(file.path(out_dir, "Sample4.bam"), saf_df, c(5, 50, 2, 10, 8))
+  for (j in seq_len(ncol(toy_counts))) {
+    create_fake_bam(file.path(out_dir, paste0("Sample", j, ".bam")),
+                    saf_df, toy_counts[, j])
+  }
 
-  message("[Part A] BAMs and SAF created.")
+  message("[Part A] Four BAMs and indexes created across twelve 5-kb segments.")
 } else {
   warning("Rsamtools not installed. Skipping BAM generation.")
 }

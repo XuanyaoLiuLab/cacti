@@ -39,7 +39,7 @@
 #'
 #' # Define output file
 #' fileout <- "inst/extdata/test_results/test_pheno_norm.txt"
-#' fileout <- "inst/extdata/test_results/test_pheno_norm_meta.txt"
+#' fileout_meta <- "inst/extdata/test_results/test_pheno_norm_meta.txt"
 #'
 #' # Check if files exist (only true if package is installed)
 #' if (nchar(filecounts) > 0) {
