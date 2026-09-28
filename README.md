@@ -127,7 +127,7 @@ The bundled synthetic data demonstrate the workflows; they do not evaluate stati
 
 ## Optional input-data QC
 
-CACTI provides optional functions to inspect sample-, feature-, and sequencing/library-level data quality. These functions report diagnostics and warnings without modifying the inputs or running automatically in the mapping workflows. See the [Reference page](https://xuanyaoliulab.github.io/cacti/reference/index.html#optional-input-data-qc) for input formats, metrics, and examples.
+CACTI provides optional QC functions for samples, features, and sequencing libraries. See the [Reference page](https://xuanyaoliulab.github.io/cacti/reference/index.html#optional-input-data-qc) for details and examples.
 
 ------------------------------------------------------------------------
 
