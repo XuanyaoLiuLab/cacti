@@ -171,6 +171,59 @@
 </div>
 </div>
 <div class="section level2">
+<h2 id="optional-input-data-qc">Optional input-data QC<a class="anchor" aria-label="anchor" href="#optional-input-data-qc"></a>
+</h2>
+<p>Three independent functions report diagnostics and warnings without modifying the inputs. They are not run automatically by the CACTI or CACTI-S workflows.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th align="left">Function</th>
+<th align="left">Input format</th>
+<th align="left">Diagnostics</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left"><code><a href="reference/cacti_qc_samples.html">cacti_qc_samples()</a></code></td>
+<td align="left">Numeric feature-by-sample matrix; specify <code>input_type = "raw_counts"</code> or <code>"normalized"</code>.</td>
+<td align="left">Missing/non-finite values; for raw counts, total counts for the sample and proportion of zero measurements.</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/cacti_qc_features.html">cacti_qc_features()</a></code></td>
+<td align="left">Numeric feature-by-sample matrix; specify the input type.</td>
+<td align="left">Missing/non-finite values and variance; for raw counts, mean counts, detection frequency, and proportion of zero measurements.</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/cacti_qc_library.html">cacti_qc_library()</a></code></td>
+<td align="left">Named character vector of BAM paths, with sample/library IDs as names. No BAM index is required.</td>
+<td align="left">Read depth, mapping quality, usable reads, duplicate flags, mean base quality, and proportion of bases with Q &gt;= 30.</td>
+</tr>
+</tbody>
+</table>
+<p>For both matrix functions, samples are columns, with sample IDs as column names; features are rows, with feature IDs as row names. Supply numeric R matrices or numeric data frames, not file paths. Both functions return the number of samples (<code>n_samples</code>), the number of features (<code>n_features</code>), a descriptive <code>summary</code> table, and <code>warnings</code>. Count totals, zero proportions, detection proportions, and variance use the observed finite measurements; missing and non-finite values are reported separately. Metrics requiring observations are <code>NA</code> when none are available. Count totals sum over the supplied features, not all sequenced reads; count-based diagnostics do not apply to normalized phenotypes.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">phenotype</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test_cacti_peak_chr5_pheno.txt"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span>,</span>
+<span>  row.names <span class="op">=</span> <span class="fl">1</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">sample_qc</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cacti_qc_samples.html">cacti_qc_samples</a></span><span class="op">(</span><span class="va">phenotype</span>, input_type <span class="op">=</span> <span class="st">"normalized"</span><span class="op">)</span></span>
+<span><span class="va">feature_qc</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cacti_qc_features.html">cacti_qc_features</a></span><span class="op">(</span><span class="va">phenotype</span>, input_type <span class="op">=</span> <span class="st">"normalized"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>n_samples <span class="op">=</span> <span class="va">sample_qc</span><span class="op">$</span><span class="va">n_samples</span>, n_features <span class="op">=</span> <span class="va">feature_qc</span><span class="op">$</span><span class="va">n_features</span><span class="op">)</span></span>
+<span><span class="va">sample_qc</span><span class="op">$</span><span class="va">summary</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">feature_qc</span><span class="op">$</span><span class="va">summary</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">bam_qc</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cacti_qc_library.html">cacti_qc_library</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">file_bams</span>, <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"\\.bam$"</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">file_bams</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">bam_qc</span><span class="op">$</span><span class="va">summary</span></span></code></pre></div>
+<p>BAM metrics count primary read records, not paired-end fragments, and describe only the records present in the supplied files. Removed reads cannot be recovered. Base quality describes confidence in nucleotide calls, whereas MAPQ describes alignment confidence. <code>mean_base_quality</code> is the mean Phred score across bases with stored quality scores; <code>prop_bases_q30</code> is the proportion of these bases with Q &gt;= 30. These metrics use all primary records, independently of the usable-read filters. The report also includes <code>bases_with_quality</code> and <code>reads_without_base_quality</code>; missing qualities are excluded, not treated as zero, and both quality metrics are <code>NA</code> when no scores are available.</p>
+<p>Set <code>duplicate_flags = "marked"</code> only when duplicate marking is known to have been performed; otherwise the duplicate proportion is reported as unavailable. QC warning criteria are configurable, and these diagnostics do not establish statistical power or false-positive control. See the vignettes and function help for examples and metric definitions.</p>
+<hr>
+</div>
+<div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
 <div class="section level3">
@@ -182,7 +235,7 @@
 <li><p>CACTI-S Pipeline</p></li>
 </ul>
 <p>The installation above skips vignette building; use the online documentation. To also install local vignettes, first install <a href="https://pandoc.org/installing.html" class="external-link">Pandoc</a>, then run:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>repos <span class="op">=</span> <span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/repositories.html" class="external-link">repositories</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span></span>
 <span>  <span class="st">"XuanyaoLiuLab/cacti"</span>,</span>
@@ -191,14 +244,14 @@
 <span>  force <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>After installation with vignettes:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"cacti_peak_window"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"cacti_s_prep"</span>, package <span class="op">=</span> <span class="st">"cacti"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="main-functions-documentation">Main functions documentation<a class="anchor" aria-label="anchor" href="#main-functions-documentation"></a>
 </h3>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">?</span><span class="va">cacti_run_chr</span></span>
 <span><span class="op">?</span><span class="va">cacti_run_genome</span></span>
 <span><span class="op">?</span><span class="va">cacti_add_fdr</span></span>

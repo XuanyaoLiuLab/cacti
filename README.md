@@ -125,6 +125,41 @@ The bundled synthetic data demonstrate the workflows; they do not evaluate stati
 
 ------------------------------------------------------------------------
 
+## Optional input-data QC
+
+Three independent functions report diagnostics and warnings without modifying the inputs. They are not run automatically by the CACTI or CACTI-S workflows.
+
+| Function | Input format | Diagnostics |
+|:--|:--|:--|
+| `cacti_qc_samples()` | Numeric feature-by-sample matrix; specify `input_type = "raw_counts"` or `"normalized"`. | Missing/non-finite values; for raw counts, total counts for the sample and proportion of zero measurements. |
+| `cacti_qc_features()` | Numeric feature-by-sample matrix; specify the input type. | Missing/non-finite values and variance; for raw counts, mean counts, detection frequency, and proportion of zero measurements. |
+| `cacti_qc_library()` | Named character vector of BAM paths, with sample/library IDs as names. No BAM index is required. | Read depth, mapping quality, usable reads, duplicate flags, mean base quality, and proportion of bases with Q >= 30. |
+
+For both matrix functions, samples are columns, with sample IDs as column names; features are rows, with feature IDs as row names. Supply numeric R matrices or numeric data frames, not file paths. Both functions return the number of samples (`n_samples`), the number of features (`n_features`), a descriptive `summary` table, and `warnings`. Count totals, zero proportions, detection proportions, and variance use the observed finite measurements; missing and non-finite values are reported separately. Metrics requiring observations are `NA` when none are available. Count totals sum over the supplied features, not all sequenced reads; count-based diagnostics do not apply to normalized phenotypes.
+
+```r
+phenotype <- as.matrix(read.delim(
+  system.file("extdata", "test_cacti_peak_chr5_pheno.txt", package = "cacti"),
+  row.names = 1, check.names = FALSE
+))
+sample_qc <- cacti_qc_samples(phenotype, input_type = "normalized")
+feature_qc <- cacti_qc_features(phenotype, input_type = "normalized")
+c(n_samples = sample_qc$n_samples, n_features = feature_qc$n_features)
+sample_qc$summary
+head(feature_qc$summary)
+
+bam_qc <- cacti_qc_library(
+  setNames(file_bams, sub("\\.bam$", "", basename(file_bams)))
+)
+bam_qc$summary
+```
+
+BAM metrics count primary read records, not paired-end fragments, and describe only the records present in the supplied files. Removed reads cannot be recovered. Base quality describes confidence in nucleotide calls, whereas MAPQ describes alignment confidence. `mean_base_quality` is the mean Phred score across bases with stored quality scores; `prop_bases_q30` is the proportion of these bases with Q >= 30. These metrics use all primary records, independently of the usable-read filters. The report also includes `bases_with_quality` and `reads_without_base_quality`; missing qualities are excluded, not treated as zero, and both quality metrics are `NA` when no scores are available.
+
+Set `duplicate_flags = "marked"` only when duplicate marking is known to have been performed; otherwise the duplicate proportion is reported as unavailable. QC warning criteria are configurable, and these diagnostics do not establish statistical power or false-positive control. See the vignettes and function help for examples and metric definitions.
+
+------------------------------------------------------------------------
+
 ## Documentation
 
 ### Vignettes

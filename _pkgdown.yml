@@ -50,6 +50,13 @@ reference:
     contents:
       - cacti_s_prep
 
+  - title: "Optional input-data QC"
+    desc: "Independent diagnostics that report data quality without modifying inputs."
+    contents:
+      - cacti_qc_samples
+      - cacti_qc_features
+      - cacti_qc_library
+
   - title: "Building blocks"
     desc: "Low-level functions for segmentation, counting, preprocessing, grouping, and testing."
     contents:

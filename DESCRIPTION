@@ -21,6 +21,7 @@ Depends:
 Imports: 
     ACAT,
     BiocGenerics,
+    Biostrings,
     CompQuadForm,
     data.table,
     dplyr,
@@ -30,6 +31,7 @@ Imports:
     qvalue,
     R.utils (>= 2.13.0),
     readr,
+    Rsamtools,
     Rsubread,
     snpStats,
     stringr,

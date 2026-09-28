@@ -83,6 +83,18 @@ The CACTI-S pipeline has three main steps:
 
 -   Output: Cis-QTL summary statistics (signed association statistics), which serve as the primary input for the CACTI multivariate test.
 
+### Optional input-data QC
+
+These independent functions report diagnostics and warnings without modifying inputs. They are not called automatically by the preprocessing or mapping workflow.
+
+| Function | Input format | Diagnostics |
+|:--|:--|:--|
+| `cacti_qc_samples()` | Numeric feature-by-sample matrix, with `input_type = "raw_counts"` or `"normalized"`. | Missing/non-finite values; for raw counts, total counts for the sample and proportion of zero measurements. |
+| `cacti_qc_features()` | Numeric feature-by-sample matrix, with the input type specified. | Missing/non-finite values and variance; for raw counts, mean counts, detection frequency, and proportion of zero measurements. |
+| `cacti_qc_library()` | Named character vector of BAM paths; names are sample/library IDs. No index is required. | Read depth, mapping quality, usable reads, duplicate flags, mean base quality, and proportion of bases with Q >= 30. |
+
+Matrix inputs are numeric R matrices or numeric data frames, not file paths. Samples are columns, with sample IDs as column names; features are rows, with feature IDs as row names. Both matrix functions return `n_samples`, `n_features`, a descriptive `summary` table, and `warnings`, without classifying features as pass/fail. Count totals, zero proportions, detection proportions, and variance use observed finite measurements; missing and non-finite values are reported separately. Metrics requiring observations are `NA` when none are available. Count totals sum over the supplied features, not all sequenced reads. Use `input_type = "normalized"` for normalized phenotypes; count-based diagnostics are then omitted. Warning thresholds are configurable: no features or samples are removed. These checks do not establish statistical power or false-positive control.
+
 ## Part 2: Quick start
 
 For most users, the `cacti_s_prep()` function is the most convenient way to run the pipeline. It automates all steps and manages intermediate files.
@@ -107,6 +119,31 @@ file_cov   <- system.file("extdata", "test_cov.txt", package = "cacti")
 
 print(basename(c(bam_files, file_vcf, file_cov)))
 ```
+
+#### Optional: inspect the BAM files
+
+Name each BAM path with its sample/library ID. Metrics count primary read records, not paired-end fragments. Usable reads are mapped, pass `min_mapq`, are not flagged as QC failures, and, by default, are not flagged as duplicates. The mapping-quality distribution is also returned.
+
+```{r bam-input-qc}
+named_bams <- setNames(bam_files, sub("\\.bam$", "", basename(bam_files)))
+bam_qc <- cacti_qc_library(named_bams, min_mapq = 10)
+knitr::kable(bam_qc$summary[, c(
+  "sample_id", "total_reads", "mapped_reads", "usable_reads"
+)])
+knitr::kable(bam_qc$summary[, c(
+  "sample_id", "mean_mapq", "mapq_pass_prop", "duplicate_prop"
+)])
+knitr::kable(bam_qc$summary[, c(
+  "sample_id", "mean_base_quality", "prop_bases_q30",
+  "reads_without_base_quality"
+)])
+```
+
+Selected columns are shown here; `bam_qc$summary` contains the full set of diagnostics. `mapq_pass_prop` is the proportion of mapped reads passing `min_mapq`. MAPQ describes alignment confidence, not nucleotide base quality.
+
+`mean_base_quality` is the mean Phred score across bases with stored quality scores, not a mean of per-read averages. `prop_bases_q30` is the proportion of these bases with Q >= 30. Base quality describes confidence in nucleotide calls. These metrics use all primary records, including unmapped reads and reads excluded by the usable-read filters, but not secondary or supplementary alignments. The report also includes `bases_with_quality` and `reads_without_base_quality`. Missing qualities are excluded, not treated as zero; the function warns when qualities are missing and returns `NA` for both quality metrics when no scores are available.
+
+Duplicate-marking status is unknown by default, so the duplicate proportion is unavailable. Set `duplicate_flags = "marked"` only when duplicate marking is known to have been performed. Previously filtered BAMs cannot reveal the original read depth or the reads already removed, including duplicates. No library-complexity or signal-enrichment measures are calculated.
 
 ### 2. Run the pipeline
 
@@ -164,6 +201,26 @@ raw_counts <- data.table::fread(res$raw_counts, nrows = 5, data.table = FALSE)
 names(raw_counts)[7:ncol(raw_counts)] <- basename(names(raw_counts)[7:ncol(raw_counts)])
 knitr::kable(raw_counts, caption = "Raw counts within segments (Top 5 Rows)")
 ```
+
+#### Optional: inspect the raw-count matrix
+
+The following optional recipe reads all rows, removes the six annotation columns from the featureCounts table, and assigns segment and sample IDs to the numeric matrix. Unlike the five-row preview above, QC should use all supplied features. The library-size diagnostic is the total counts for the sample across these features, not the total number of sequenced reads.
+
+```{r raw-count-qc, eval=FALSE}
+count_table <- data.table::fread(res$raw_counts, data.table = FALSE)
+count_matrix <- as.matrix(count_table[, 7:ncol(count_table), drop = FALSE])
+rownames(count_matrix) <- count_table[[1]]
+colnames(count_matrix) <- sub("\\.bam$", "", basename(colnames(count_matrix)))
+sample_qc <- cacti_qc_samples(count_matrix, input_type = "raw_counts")
+feature_qc <- cacti_qc_features(
+  count_matrix, input_type = "raw_counts", min_count = 1, min_prop = 0.2
+)
+c(n_samples = sample_qc$n_samples, n_features = feature_qc$n_features)
+sample_qc$summary
+head(feature_qc$summary)
+```
+
+Here, detection means a raw count of at least 1. `min_prop = 0.2` triggers a warning when fewer than 20% of observed samples have detectable counts; it is not the CPM filter used by preprocessing and does not remove features. For real data, ensure the sample IDs extracted from the count-table column names match your genotype and covariate IDs.
 
 #### Normalized phenotype matrix
 

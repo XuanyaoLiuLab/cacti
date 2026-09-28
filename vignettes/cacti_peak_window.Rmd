@@ -63,6 +63,20 @@ The main function is `cacti_peak_window()`. By default, `chr = "All"` processes 
 
 Use matching peak and sample IDs across inputs. In summary-statistics mode, the association statistics, phenotypes, and covariates should describe the same analysis samples and features. For genome-wide analysis, provide the inputs for all chromosomes to be analyzed.
 
+### Optional input-data QC
+
+These independent functions report diagnostics and warnings without modifying inputs. They are not called automatically by the mapping workflow.
+
+| Function | Input format | Diagnostics |
+|:--|:--|:--|
+| `cacti_qc_samples()` | Numeric feature-by-sample matrix, with `input_type = "raw_counts"` or `"normalized"`. | Missing/non-finite values; for raw counts, total counts for the sample and proportion of zero measurements. |
+| `cacti_qc_features()` | Numeric feature-by-sample matrix, with the input type specified. | Missing/non-finite values and variance; for raw counts, mean counts, detection frequency, and proportion of zero measurements. |
+| `cacti_qc_library()` | Named character vector of BAM paths; names are sample/library IDs. No index is required. | Read depth, mapping quality, usable reads, duplicate flags, mean base quality, and proportion of bases with Q >= 30. |
+
+Matrix inputs are numeric R matrices or numeric data frames, not file paths. Samples are columns, with sample IDs as column names; features are rows, with feature IDs as row names. Both matrix functions return `n_samples`, `n_features`, a descriptive `summary` table, and `warnings`, without classifying features as pass/fail. Count totals, zero proportions, detection proportions, and variance use observed finite measurements; missing and non-finite values are reported separately. Metrics requiring observations are `NA` when none are available. Count totals sum over the supplied features, not all sequenced reads. Count-based diagnostics are not calculated for normalized phenotypes. BAM diagnostics describe the records still present in the files, not the original sequencing libraries; see the [CACTI-S vignette](cacti_s_prep.html) for a BAM example. These checks do not establish statistical power or false-positive control.
+
+For BAMs, `mean_base_quality` averages Phred scores across bases with stored quality scores, and `prop_bases_q30` reports the proportion of those bases with Q >= 30. Unlike MAPQ, which describes alignment confidence, base quality describes confidence in nucleotide calls. Base-quality metrics use all primary records, independently of the usable-read filters. Missing qualities are excluded, not treated as zero; the report includes `bases_with_quality` and `reads_without_base_quality`, and returns `NA` for the quality metrics when no scores are available.
+
 ## Part 2: Quick start
 
 ### 1. Locate test data
@@ -114,6 +128,22 @@ knitr::kable(
   caption = "Covariates: first five rows and four samples."
 )
 ```
+
+#### Optional: inspect the input matrices
+
+Read the complete phenotype matrix, placing the first-column IDs into row names. This example uses normalized phenotypes, so raw-count diagnostics are omitted.
+
+```{r peak-input-qc}
+phenotype_qc_input <- as.matrix(read.delim(file_pheno, row.names = 1, check.names = FALSE))
+sample_qc <- cacti_qc_samples(phenotype_qc_input, input_type = "normalized")
+feature_qc <- cacti_qc_features(phenotype_qc_input, input_type = "normalized")
+
+c(n_samples = sample_qc$n_samples, n_features = feature_qc$n_features)
+knitr::kable(head(sample_qc$summary[, c("sample_id", "n_observed", "prop_missing", "prop_nonfinite")]))
+knitr::kable(head(feature_qc$summary[, c("feature_id", "n_observed", "prop_missing", "variance")]), digits = 3)
+```
+
+Selected columns are shown here; each `summary` contains the full set of diagnostics.
 
 ### 2. Run the pipeline
 
