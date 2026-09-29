@@ -1,0 +1,107 @@
+{
+  "genome": "hg38",
+  "locus": [
+    "chr3:129350001-129400000",
+    "chr3:161220001-161280000",
+    "chr3:15420001-15480000",
+    "chr3:4800001-4860000"
+  ],
+  "tracks": [
+    {
+      "type": "wig",
+      "format": "bigwig",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2d_h3k36me3/means/A_A.bw",
+      "color": "#F03B20",
+      "min": 0,
+      "graphType": "line",
+      "windowFunction": "mean",
+      "name": "A/A mean (16 profiles; 16 donors)",
+      "autoscaleGroup": "genotype_means",
+      "height": 140
+    },
+    {
+      "type": "wig",
+      "format": "bigwig",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2d_h3k36me3/means/A_G.bw",
+      "color": "#7A0177",
+      "min": 0,
+      "graphType": "line",
+      "windowFunction": "mean",
+      "name": "A/G mean (48 profiles; 48 donors)",
+      "autoscaleGroup": "genotype_means",
+      "height": 140
+    },
+    {
+      "type": "wig",
+      "format": "bigwig",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2d_h3k36me3/means/G_G.bw",
+      "color": "#08519C",
+      "min": 0,
+      "graphType": "line",
+      "windowFunction": "mean",
+      "name": "G/G mean (28 profiles; 27 donors)",
+      "autoscaleGroup": "genotype_means",
+      "height": 140
+    },
+    {
+      "type": "annotation",
+      "format": "bed",
+      "indexed": false,
+      "name": "Available coverage (outside these regions: not exported)",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2d_h3k36me3/annotations/available_regions.bed",
+      "displayMode": "EXPANDED",
+      "height": 65,
+      "color": "#666666"
+    },
+    {
+      "type": "annotation",
+      "format": "bed",
+      "indexed": false,
+      "name": "Focal SNP",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2d_h3k36me3/annotations/focal_snp.bed",
+      "displayMode": "EXPANDED",
+      "height": 65,
+      "color": "#666666"
+    },
+    {
+      "type": "annotation",
+      "format": "bed",
+      "indexed": false,
+      "name": "Focal cWindow",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2d_h3k36me3/annotations/cwindow.bed",
+      "displayMode": "EXPANDED",
+      "height": 65,
+      "color": "#666666"
+    },
+    {
+      "type": "annotation",
+      "format": "bed",
+      "indexed": false,
+      "name": "Peak/segment positions",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2d_h3k36me3/annotations/features.bed",
+      "displayMode": "EXPANDED",
+      "height": 65,
+      "color": "#666666"
+    },
+    {
+      "type": "annotation",
+      "format": "bed",
+      "indexed": false,
+      "name": "Focal 5-kb segments: normalized-phenotype QTL Z and P",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2d_h3k36me3/annotations/focal_segments.bed",
+      "displayMode": "EXPANDED",
+      "height": 65,
+      "color": "#666666"
+    },
+    {
+      "type": "annotation",
+      "format": "bed",
+      "indexed": false,
+      "name": "Same focal SNP: nearby cWindow PCO P values",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2d_h3k36me3/annotations/nearby_windows.bed",
+      "displayMode": "EXPANDED",
+      "height": 65,
+      "color": "#666666"
+    }
+  ]
+}

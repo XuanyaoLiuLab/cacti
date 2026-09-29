@@ -28,6 +28,7 @@ navbar:
       - home
       - articles
       - reference
+      - genomic_views
   components:
     home:
       text: "Home"
@@ -38,6 +39,9 @@ navbar:
     reference:
       text: "Reference"
       href: reference/index.html
+    genomic_views:
+      text: "Genomic views"
+      href: genomic-views/index.html
 
 reference:
   - title: "CACTI peak-window cQTL mapping pipeline"

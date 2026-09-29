@@ -1,0 +1,6 @@
+region_id	region_type	chrom	start_0based	end_0based_exclusive	browser_coordinates
+focal	focal	chr5	1100000	1150000	chr5:1100001-1150000
+control_1	unrelated_control	chr5	78350000	78400000	chr5:78350001-78400000
+control_2	unrelated_control	chr5	134000000	134050000	chr5:134000001-134050000
+control_3	unrelated_control	chr5	179500000	179550000	chr5:179500001-179550000
+wide_view	wide_flanking_view	chr5	604822	1604822	chr5:604823-1604822

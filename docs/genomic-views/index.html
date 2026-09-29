@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Genomic views · CACTI</title>
+  <link rel="stylesheet" href="browser.css">
+  <script type="module" src="browser.js"></script>
+</head>
+<body>
+  <header class="site-nav">
+    <nav aria-label="Site navigation">
+      <a class="brand" href="../index.html">cacti</a>
+      <a href="../index.html">Home</a>
+      <a href="../articles/index.html">Vignettes</a>
+      <a href="../reference/index.html">Reference</a>
+      <span class="active">Genomic views</span>
+    </nav>
+  </header>
+  <main>
+    <div class="page-heading">
+      <p class="eyebrow">CACTI manuscript · Figure 2</p>
+      <h1>Interactive genomic views</h1>
+      <p class="intro">Explore chromatin coverage by genotype at the two example loci and their control regions.</p>
+    </div>
+
+    <div class="examples" role="group" aria-label="Choose figure">
+      <button id="fig2b" class="example selected" data-example="fig2b_h3k27ac" aria-pressed="true">
+        <span class="figure-label">Figure 2B</span><span class="mark">H3K27ac <small>CACTI</small></span>
+      </button>
+      <button id="fig2d" class="example" data-example="fig2d_h3k36me3" aria-pressed="false">
+        <span class="figure-label">Figure 2D</span><span class="mark">H3K36me3 <small>CACTI-S</small></span>
+      </button>
+    </div>
+
+    <section class="viewer" aria-label="Interactive genome browser">
+      <div class="viewer-heading">
+        <div><h2 id="locus-title">Loading locus…</h2><p id="locus-meta" class="muted"></p></div>
+        <span class="assembly">GRCh38 / hg38</span>
+      </div>
+      <div class="controls">
+        <label>Tracks
+          <select id="view">
+            <option value="means">Genotype-group means</option>
+            <option value="individuals">Individual profiles</option>
+          </select>
+        </label>
+        <label class="region-control">Region
+          <select id="region">
+            <option value="cwindow">Focal cWindow</option>
+            <option value="wide_view">Wider view (±500 kb)</option>
+            <option value="control_1">Control 1</option>
+            <option value="control_2">Control 2</option>
+            <option value="control_3">Control 3</option>
+            <option value="compare">cWindow + three controls</option>
+          </select>
+        </label>
+        <label>Genotypes
+          <select id="genotype" disabled><option value="all">All three groups</option></select>
+        </label>
+        <button id="reset" class="secondary">Reset view</button>
+      </div>
+      <div class="legend-row"><div id="legend" class="legend"></div><span id="scale-note" class="muted"></span></div>
+      <div class="browser-help">Drag to pan · double-click or use +/− to zoom · click an annotation for details</div>
+      <div id="status" role="status" aria-live="polite">Preparing tracks…</div>
+      <div id="browser-scroll"><div id="igv-browser"></div></div>
+      <div class="scope-note">Coverage is available only in the ±500-kb region and three controls. Blank areas elsewhere mean <strong>not exported</strong>, not zero signal.</div>
+    </section>
+
+    <section class="below-viewer">
+      <details open>
+        <summary>About these tracks</summary>
+        <p>The tracks retain the source TMM-normalized coverage. Group means give equal weight to each plotted profile, including technical replicates. Profiles are not necessarily independent donors.</p>
+      </details>
+      <aside class="downloads" aria-label="Source data">
+        <h3>Source data</h3>
+        <a id="samples-link" download>Sample and genotype metadata ↗</a>
+        <a id="regions-link" download>Exported region coordinates ↗</a>
+        <a href="https://doi.org/10.1038/s41588-024-01872-x">Source study: Fair et al. (2024) ↗</a>
+      </aside>
+    </section>
+    <footer>CACTI · Regional genome browser <span>Powered by igv.js 3.0.0</span></footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,87 @@
+{
+  "genome": "hg38",
+  "locus": [
+    "chr5:1104126-1140698",
+    "chr5:78350001-78400000",
+    "chr5:134000001-134050000",
+    "chr5:179500001-179550000"
+  ],
+  "tracks": [
+    {
+      "type": "wig",
+      "format": "bigwig",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2b_h3k27ac/means/C_C.bw",
+      "color": "#F03B20",
+      "min": 0,
+      "graphType": "line",
+      "windowFunction": "mean",
+      "name": "C/C mean (49 profiles; 45 donors)",
+      "autoscaleGroup": "genotype_means",
+      "height": 140
+    },
+    {
+      "type": "wig",
+      "format": "bigwig",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2b_h3k27ac/means/C_T.bw",
+      "color": "#7A0177",
+      "min": 0,
+      "graphType": "line",
+      "windowFunction": "mean",
+      "name": "C/T mean (23 profiles; 22 donors)",
+      "autoscaleGroup": "genotype_means",
+      "height": 140
+    },
+    {
+      "type": "wig",
+      "format": "bigwig",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2b_h3k27ac/means/T_T.bw",
+      "color": "#08519C",
+      "min": 0,
+      "graphType": "line",
+      "windowFunction": "mean",
+      "name": "T/T mean (6 profiles; 5 donors)",
+      "autoscaleGroup": "genotype_means",
+      "height": 140
+    },
+    {
+      "type": "annotation",
+      "format": "bed",
+      "indexed": false,
+      "name": "Available coverage (outside these regions: not exported)",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2b_h3k27ac/annotations/available_regions.bed",
+      "displayMode": "EXPANDED",
+      "height": 65,
+      "color": "#666666"
+    },
+    {
+      "type": "annotation",
+      "format": "bed",
+      "indexed": false,
+      "name": "Focal SNP",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2b_h3k27ac/annotations/focal_snp.bed",
+      "displayMode": "EXPANDED",
+      "height": 65,
+      "color": "#666666"
+    },
+    {
+      "type": "annotation",
+      "format": "bed",
+      "indexed": false,
+      "name": "Focal cWindow",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2b_h3k27ac/annotations/cwindow.bed",
+      "displayMode": "EXPANDED",
+      "height": 65,
+      "color": "#666666"
+    },
+    {
+      "type": "annotation",
+      "format": "bed",
+      "indexed": false,
+      "name": "Peak/segment positions",
+      "url": "https://xuanyaoliulab.github.io/cacti/genomic-views/tracks/fig2b_h3k27ac/annotations/features.bed",
+      "displayMode": "EXPANDED",
+      "height": 65,
+      "color": "#666666"
+    }
+  ]
+}
